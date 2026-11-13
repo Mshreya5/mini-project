@@ -1,0 +1,279 @@
+{
+  "version": "1.0.0",
+  "severity_points": {
+    "CRITICAL": 45,
+    "HIGH": 30,
+    "MEDIUM": 18,
+    "LOW": 6
+  },
+  "module_caps": {
+    "message": 55,
+    "url": 45,
+    "system": 18
+  },
+  "thresholds": {
+    "medium": 24,
+    "high": 55
+  },
+  "scam_confidence": {
+    "prediction_threshold": 0.5,
+    "high_confidence": 0.8
+  },
+  "degraded_floor": "MEDIUM",
+  "max_actions": 4,
+  "indicators": {
+    "SCAM_PREDICTION": {
+      "label": "Message classified as a possible scam",
+      "severity": "HIGH",
+      "source": "message",
+      "actions": ["DO_NOT_RESPOND", "VERIFY_SENDER"]
+    },
+    "HIGH_CONFIDENCE_SCAM": {
+      "label": "Very high confidence scam prediction",
+      "severity": "CRITICAL",
+      "source": "message",
+      "decisive": true,
+      "actions": ["DO_NOT_RESPOND", "NEVER_SHARE_OTP", "DO_NOT_TRANSFER_MONEY"]
+    },
+    "OTP_REQUEST": {
+      "label": "Asks for an OTP, PIN or password",
+      "severity": "HIGH",
+      "source": "message",
+      "actions": ["NEVER_SHARE_OTP", "VERIFY_SENDER"]
+    },
+    "BANK_DETAILS_REQUEST": {
+      "label": "Asks for bank or card details",
+      "severity": "HIGH",
+      "source": "message",
+      "actions": ["NEVER_SHARE_BANK_DETAILS", "DO_NOT_TRANSFER_MONEY"]
+    },
+    "PAYMENT_REQUEST": {
+      "label": "Asks for a payment, transfer or gift card",
+      "severity": "HIGH",
+      "source": "message",
+      "actions": ["DO_NOT_TRANSFER_MONEY", "VERIFY_SENDER"]
+    },
+    "CREDENTIAL_LINK_REQUEST": {
+      "label": "Asks you to log in through a link",
+      "severity": "HIGH",
+      "source": "message",
+      "actions": ["DO_NOT_CLICK_LINK", "VERIFY_OFFICIAL_CHANNEL"]
+    },
+    "IMPERSONATION": {
+      "label": "Claims to be from a bank, government body or known company",
+      "severity": "MEDIUM",
+      "source": "message",
+      "actions": ["VERIFY_OFFICIAL_CHANNEL"]
+    },
+    "ACCOUNT_THREAT": {
+      "label": "Threatens account closure, a fine or legal action",
+      "severity": "MEDIUM",
+      "source": "message",
+      "actions": ["DO_NOT_RESPOND", "VERIFY_OFFICIAL_CHANNEL"]
+    },
+    "URGENCY_PRESSURE": {
+      "label": "Uses urgency or a short deadline",
+      "severity": "MEDIUM",
+      "source": "message",
+      "actions": ["TAKE_TIME", "VERIFY_SENDER"]
+    },
+    "PRIZE_BAIT": {
+      "label": "Promises a prize, refund or reward",
+      "severity": "MEDIUM",
+      "source": "message",
+      "actions": ["DO_NOT_RESPOND"]
+    },
+    "SENSITIVE_INFO_REQUEST": {
+      "label": "Asks for identity or personal information",
+      "severity": "MEDIUM",
+      "source": "message",
+      "actions": ["NEVER_SHARE_BANK_DETAILS"]
+    },
+    "MALICIOUS_URL": {
+      "label": "Link flagged as malicious or a phishing page",
+      "severity": "CRITICAL",
+      "source": "url",
+      "decisive": true,
+      "actions": ["DO_NOT_CLICK_LINK", "REPORT_MESSAGE"]
+    },
+    "SUSPICIOUS_URL": {
+      "label": "Link shows suspicious characteristics",
+      "severity": "HIGH",
+      "source": "url",
+      "actions": ["DO_NOT_CLICK_LINK", "VERIFY_OFFICIAL_CHANNEL"]
+    },
+    "LOOKALIKE_DOMAIN": {
+      "label": "Link imitates the address of a known website",
+      "severity": "HIGH",
+      "source": "url",
+      "actions": ["DO_NOT_CLICK_LINK"]
+    },
+    "IP_ADDRESS_URL": {
+      "label": "Link uses a raw IP address instead of a domain name",
+      "severity": "MEDIUM",
+      "source": "url",
+      "actions": ["DO_NOT_CLICK_LINK"]
+    },
+    "SHORTENED_URL": {
+      "label": "Link is shortened, so the destination is hidden",
+      "severity": "MEDIUM",
+      "source": "url",
+      "actions": ["DO_NOT_CLICK_LINK"]
+    },
+    "NO_HTTPS": {
+      "label": "Link does not use a secure connection",
+      "severity": "LOW",
+      "source": "url",
+      "actions": ["DO_NOT_CLICK_LINK"]
+    },
+    "OTP_REQUEST_WITH_LINK": {
+      "label": "OTP is requested together with an external link",
+      "severity": "CRITICAL",
+      "source": "message",
+      "decisive": true,
+      "actions": ["NEVER_SHARE_OTP", "DO_NOT_CLICK_LINK"]
+    },
+    "MESSAGE_ANALYSIS_UNAVAILABLE": {
+      "label": "Message content could not be checked for scam patterns",
+      "severity": "MEDIUM",
+      "source": "system",
+      "actions": ["TAKE_TIME", "VERIFY_SENDER"]
+    },
+    "URL_ANALYSIS_UNAVAILABLE": {
+      "label": "Link safety could not be checked",
+      "severity": "MEDIUM",
+      "source": "system",
+      "actions": ["DO_NOT_CLICK_LINK", "VERIFY_OFFICIAL_CHANNEL"]
+    }
+  },
+  "signal_map": {
+    "otp": "OTP_REQUEST",
+    "otp_request": "OTP_REQUEST",
+    "one_time_password": "OTP_REQUEST",
+    "verification_code": "OTP_REQUEST",
+    "password": "OTP_REQUEST",
+    "pin": "OTP_REQUEST",
+    "credentials": "OTP_REQUEST",
+    "bank_details": "BANK_DETAILS_REQUEST",
+    "bank_account": "BANK_DETAILS_REQUEST",
+    "card_details": "BANK_DETAILS_REQUEST",
+    "cvv": "BANK_DETAILS_REQUEST",
+    "account_number": "BANK_DETAILS_REQUEST",
+    "payment": "PAYMENT_REQUEST",
+    "payment_request": "PAYMENT_REQUEST",
+    "money_transfer": "PAYMENT_REQUEST",
+    "gift_card": "PAYMENT_REQUEST",
+    "crypto": "PAYMENT_REQUEST",
+    "wire_transfer": "PAYMENT_REQUEST",
+    "urgency": "URGENCY_PRESSURE",
+    "time_pressure": "URGENCY_PRESSURE",
+    "immediate_action": "URGENCY_PRESSURE",
+    "act_now": "URGENCY_PRESSURE",
+    "deadline": "URGENCY_PRESSURE",
+    "account_suspension": "ACCOUNT_THREAT",
+    "legal_action": "ACCOUNT_THREAT",
+    "account_blocked": "ACCOUNT_THREAT",
+    "deactivation": "ACCOUNT_THREAT",
+    "impersonation": "IMPERSONATION",
+    "authority_claim": "IMPERSONATION",
+    "bank_claim": "IMPERSONATION",
+    "government_claim": "IMPERSONATION",
+    "delivery_claim": "IMPERSONATION",
+    "prize": "PRIZE_BAIT",
+    "lottery": "PRIZE_BAIT",
+    "refund": "PRIZE_BAIT",
+    "reward": "PRIZE_BAIT",
+    "cashback": "PRIZE_BAIT",
+    "login_link": "CREDENTIAL_LINK_REQUEST",
+    "password_reset": "CREDENTIAL_LINK_REQUEST",
+    "verify_account": "CREDENTIAL_LINK_REQUEST",
+    "personal_information": "SENSITIVE_INFO_REQUEST",
+    "identity_document": "SENSITIVE_INFO_REQUEST",
+    "kyc_update": "SENSITIVE_INFO_REQUEST"
+  },
+  "url_flag_map": {
+    "shortened": "SHORTENED_URL",
+    "shortened_url": "SHORTENED_URL",
+    "url_shortener": "SHORTENED_URL",
+    "ip_address": "IP_ADDRESS_URL",
+    "raw_ip": "IP_ADDRESS_URL",
+    "lookalike": "LOOKALIKE_DOMAIN",
+    "typosquatting": "LOOKALIKE_DOMAIN",
+    "homoglyph": "LOOKALIKE_DOMAIN",
+    "punycode": "LOOKALIKE_DOMAIN",
+    "no_https": "NO_HTTPS",
+    "not_https": "NO_HTTPS",
+    "suspicious_tld": "SUSPICIOUS_URL",
+    "phishing_keywords": "SUSPICIOUS_URL"
+  },
+  "overrides": [
+    {
+      "id": "OVR-01",
+      "level": "HIGH",
+      "indicator": "HIGH_CONFIDENCE_SCAM",
+      "reason": "The scam model is highly confident that this message is fraudulent.",
+      "when": {
+        "prediction_in": ["SCAM"],
+        "confidence_gte": 0.8
+      }
+    },
+    {
+      "id": "OVR-02",
+      "level": "HIGH",
+      "indicator": "MALICIOUS_URL",
+      "reason": "The URL analysis module flagged the link as malicious.",
+      "when": {
+        "url_risk_in": ["MALICIOUS"]
+      }
+    },
+    {
+      "id": "OVR-03",
+      "level": "HIGH",
+      "indicator": "OTP_REQUEST_WITH_LINK",
+      "reason": "An OTP is requested while the message also pushes an external link.",
+      "when": {
+        "indicators_all": ["OTP_REQUEST"],
+        "has_link": true
+      }
+    }
+  ],
+  "actions": {
+    "NEVER_SHARE_OTP": "Never share an OTP, PIN or password. No bank, police officer or company will ever ask for it.",
+    "NEVER_SHARE_BANK_DETAILS": "Do not give out your bank account, card or identity numbers.",
+    "DO_NOT_TRANSFER_MONEY": "Do not transfer money to anyone you have not confirmed in person or by a number you looked up yourself.",
+    "DO_NOT_CLICK_LINK": "Do not click the link. Open the organisation's own app or type its address yourself.",
+    "DO_NOT_RESPOND": "Do not reply to this message and do not call any number it gives you.",
+    "VERIFY_OFFICIAL_CHANNEL": "Check with the organisation using the phone number printed on your card, bill or passbook.",
+    "VERIFY_SENDER": "Confirm who really sent this before you respond or share anything.",
+    "TAKE_TIME": "Take your time. Genuine organisations do not rush you or threaten you.",
+    "REPORT_MESSAGE": "Report the message and block the sender, then delete it.",
+    "KEEP_CAUTIOUS": "Stay cautious with messages you were not expecting, even ones that look harmless."
+  },
+  "action_priority": [
+    "NEVER_SHARE_OTP",
+    "NEVER_SHARE_BANK_DETAILS",
+    "DO_NOT_TRANSFER_MONEY",
+    "DO_NOT_CLICK_LINK",
+    "DO_NOT_RESPOND",
+    "VERIFY_OFFICIAL_CHANNEL",
+    "VERIFY_SENDER",
+    "TAKE_TIME",
+    "REPORT_MESSAGE",
+    "KEEP_CAUTIOUS"
+  ],
+  "baseline_actions": {
+    "LOW": ["KEEP_CAUTIOUS"],
+    "MEDIUM": ["VERIFY_SENDER"],
+    "HIGH": ["NEVER_SHARE_OTP", "DO_NOT_TRANSFER_MONEY"]
+  },
+  "warnings": {
+    "LOW": "No major suspicious activity was detected. Stay cautious.",
+    "MEDIUM": "This message contains some suspicious elements. Verify the sender before responding.",
+    "HIGH": "Warning! This message may be fraudulent. Do not share OTPs, passwords or banking details."
+  },
+  "degraded_warnings": {
+    "LOW": "No major suspicious activity was detected, but we could not finish every check. Stay cautious.",
+    "MEDIUM": "We could not finish checking everything, and some suspicious elements were found. Verify the sender before responding.",
+    "HIGH": "Warning! This message may be fraudulent, and we could not finish every check. Do not share OTPs, passwords or banking details."
+  }
+}

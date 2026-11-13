@@ -52,3 +52,10 @@ Thumbs.db
 # Environment / secrets
 .env
 *.env
+
+.venv/
+__pycache__/
+*.pyc
+.env
+
+echo .page_pid >> .gitignore
