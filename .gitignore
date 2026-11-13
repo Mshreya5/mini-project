@@ -1,0 +1,54 @@
+# Virtual Environments
+.venv/
+venv/
+ENV/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Notebooks checkpoints
+.ipynb_checkpoints/
+
+# Logs
+*.log
+api_startup.log
+
+# Raw data downloads and zips
+data/*.zip
+data/raw/
+
+# Model artifacts (large binary files)
+artifacts/*.joblib
+ai_module/models/*.joblib
+
+# Generated report images and evaluation reports
+reports/*.png
+reports/*.md
+ai_module/reports/
+
+# Documentation and personal notes
+AI_ML_COMPLETE_TECHNICAL_DOCUMENTATION.md
+*.pdf
+*.pptx
+*.ppt
+
+# Dataset CSV (generated from raw TSV at runtime)
+ai_module/dataset/sms_scam_dataset.csv
+
+# OS generated
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Environment / secrets
+.env
+*.env
