@@ -1,0 +1,269 @@
+"""
+Multilingual Translations for SilverShield AI Frontend
+Member 1: Frontend and Accessibility
+Supported Languages: English, Hindi (हिन्दी), Kannada (ಕನ್ನಡ)
+"""
+
+LANGUAGES = {
+    "English": "en-IN",
+    "Hindi": "hi-IN",
+    "Kannada": "kn-IN"
+}
+
+TRANSLATIONS = {
+    "English": {
+        "app_title": "SilverShield AI",
+        "app_tagline": "Your Digital Safety Companion",
+        "home": "Home",
+        "check_message": "Check a Message",
+        "safety_tips": "Scam Awareness",
+        "trusted_helper": "Trusted Helper",
+        "safety_bot": "AI Companion",
+        "settings": "Accessibility Settings",
+        
+        # Home
+        "welcome_hero": "Welcome to SilverShield AI",
+        "welcome_sub": "Simple, accessible protection against fraud, suspicious messages, and cyber threats.",
+        "welcome_desc": "We help you pause, verify, and stay safe online. You do not have to face worrying messages alone.",
+        "card_rules_title": "Three Golden Rules for Staying Safe",
+        "rule_1_title": "Keep your OTP strictly secret",
+        "rule_1_desc": "Never share your SMS code with anyone, even if they claim to be a bank manager or police officer.",
+        "rule_2_title": "Never rush to pay or click",
+        "rule_2_desc": "Scammers create false panic (threat of power cut or arrest). Take a deep breath and verify first.",
+        "rule_3_title": "Ask someone you trust",
+        "rule_3_desc": "When unsure, show the message to your trusted family helper or dial 1930 for cyber helpline assistance.",
+
+        # Check Message
+        "check_title": "Check a Message or Link",
+        "check_subtitle": "Paste any suspicious SMS, WhatsApp message, or website link. We will check it safely.",
+        "sample_prompts_label": "Try an example message:",
+        "sample_legit": "Legitimate Family Message",
+        "sample_sbi": "Bank KYC Suspension Scam",
+        "sample_power": "Electricity Disconnection Scam",
+        "sample_prize": "Lottery / Reward Link Scam",
+        "sample_otp": "Fake Bank Officer OTP Request",
+        "message_box_label": "Paste your message here:",
+        "message_box_placeholder": "Example: Your bank account will be blocked today. Click http://bit.ly/update-kyc to verify...",
+        "btn_check": "Analyze Message Safety",
+        "btn_clear": "Clear Text",
+        "btn_voice_input": "Speak Message (Voice Input)",
+        "backend_connected": "Connected to Central Risk Aggregator (Live API)",
+        "backend_fallback": "Companion Running in Standalone Safe Mode",
+        
+        # Results
+        "risk_low_title": "Safe & Normal",
+        "risk_low_desc": "No major suspicious indicators detected. Stay cautious as usual.",
+        "risk_med_title": "Caution: Suspicious Elements Detected",
+        "risk_med_desc": "This message has elements often found in scams. Verify before taking any action.",
+        "risk_high_title": "High Alert: Likely Fraudulent Message!",
+        "risk_high_desc": "Warning! This message displays dangerous scam patterns. Do not click links or share details.",
+        "actions_title": "What should you do right now?",
+        "indicators_title": "Why did we flag this message?",
+        "read_aloud_btn": "Read Result Aloud",
+        "alert_helper_btn": "Ask My Trusted Helper for Help",
+        "technical_details": "View Technical Breakdown (For Caregivers & Evaluators)",
+        
+        # Scam Awareness
+        "tips_title": "Common Scams Targeting Seniors",
+        "tips_sub": "Learn how scammers operate and how to spot their tricks in seconds.",
+        "scam_1_title": "The 'Digital Arrest' Scam",
+        "scam_1_desc": "Scammers pose as CBI or Police on video calls, claiming you are involved in a crime. Real police never arrest someone over WhatsApp or demand bail money.",
+        "scam_2_title": "Electricity / Utility Disconnection Scam",
+        "scam_2_desc": "You receive a message saying power will be cut at 9:30 PM due to unpaid bill. Always pay through your official electricity board app, not via numbers in SMS.",
+        "scam_3_title": "Bank Account KYC & PAN Update",
+        "scam_3_desc": "Messages claiming your bank card or PAN is blocked, with a link to update it. Banks never send shortened links (like bit.ly) to collect PAN or passwords.",
+        "scam_4_title": "Remote Screen Sharing App Trap",
+        "scam_4_desc": "A caller asking you to install AnyDesk, TeamViewer, or QuickSupport to 'help' you. Once installed, they can see your phone and steal your money.",
+        
+        # Trusted Helper
+        "helper_title": "Your Trusted Helper (Caregiver)",
+        "helper_sub": "Save the contact details of a family member you trust, so you can reach them in one tap.",
+        "helper_name": "Helper's Name",
+        "helper_relation": "Relationship (e.g., Son, Daughter, Grandchild)",
+        "helper_phone": "Helper's Phone / WhatsApp Number",
+        "helper_saved": "Trusted helper saved for this session.",
+        "helper_whatsapp_msg": "Hello, I received a suspicious message and would like you to check it for me on SilverShield AI: ",
+        "emergency_helpline_title": "National Cyber Crime Helpline (India)",
+        "emergency_helpline_desc": "If you lost money or suspect fraud, dial 1930 immediately or visit cybercrime.gov.in.",
+
+        # Settings
+        "settings_title": "Easy Reading & Accessibility",
+        "font_size_label": "Text Size",
+        "font_normal": "Standard (18px)",
+        "font_large": "Large (22px)",
+        "font_xlarge": "Extra Large (26px)",
+        "contrast_label": "High Contrast Mode (WCAG AAA)",
+        "audio_speed_label": "Speech Narration Speed",
+        "restore_defaults": "Restore Default Accessibility Settings"
+    },
+    "Hindi": {
+        "app_title": "SilverShield AI",
+        "app_tagline": "आपका डिजिटल सुरक्षा साथी",
+        "home": "मुख्य पृष्ठ",
+        "check_message": "संदेश जाँचें",
+        "safety_tips": "धोखाधड़ी जागरूकता",
+        "trusted_helper": "भरोसेमंद सहायक",
+        "safety_bot": "AI सुरक्षा सहायक",
+        "settings": "आसान पढ़ाई सेटिंग्स",
+        
+        # Home
+        "welcome_hero": "SilverShield AI में आपका स्वागत है",
+        "welcome_sub": "धोखाधड़ी, फर्जी संदेशों और साइबर अपराध से बुजुर्गों की सरल और सुरक्षित रक्षा।",
+        "welcome_desc": "हम आपको ठहरने, जाँचने और सुरक्षित रहने में मदद करते हैं। आपको किसी भी संदेहास्पद संदेश से अकेले घबराने की ज़रूरत नहीं है।",
+        "card_rules_title": "सुरक्षित रहने के 3 सुनहरे नियम",
+        "rule_1_title": "अपना OTP पूरी तरह गुप्त रखें",
+        "rule_1_desc": "अपना SMS कोड कभी किसी को न बताएं, चाहे वह बैंक मैनेजर या पुलिस अधिकारी होने का दावा क्यों न करे।",
+        "rule_2_title": "जल्दबाजी में भुगतान न करें",
+        "rule_2_desc": "धोखेबाज डर का माहौल बनाते हैं (जैसे बिजली कटने या गिरफ्तारी की धमकी)। शांत रहें और पहले पुष्टि करें।",
+        "rule_3_title": "अपने भरोसेमंद व्यक्ति से पूछें",
+        "rule_3_desc": "संदेह होने पर संदेश अपने परिवार के सदस्य को दिखाएं या 1930 साइबर हेल्पलाइन पर कॉल करें।",
+
+        # Check Message
+        "check_title": "संदेश या लिंक की जाँच करें",
+        "check_subtitle": "कोई भी संदिग्ध SMS, WhatsApp संदेश या वेबसाइट लिंक यहाँ डालें। हम सुरक्षित रूप से जाँच करेंगे।",
+        "sample_prompts_label": "नमूना संदेश चुनें:",
+        "sample_legit": "पारिवारिक संदेश",
+        "sample_sbi": "बैंक KYC निलंबन घोटाला",
+        "sample_power": "बिजली बिल डिस्कनेक्शन घोटाला",
+        "sample_prize": "लॉटरी / इनाम लिंक घोटाला",
+        "sample_otp": "फर्जी बैंक अधिकारी द्वारा OTP मांग",
+        "message_box_label": "अपना संदेश यहाँ पेस्ट करें:",
+        "message_box_placeholder": "उदा: आपका बैंक खाता आज ब्लॉक हो जाएगा। पुष्टि करने के लिए लिंक पर क्लिक करें...",
+        "btn_check": "सुरक्षा जाँच करें",
+        "btn_clear": "हटाएँ",
+        "btn_voice_input": "बोलकर संदेश दर्ज करें",
+        "backend_connected": "केंद्रीय जोखिम प्रणाली से जुड़ा हुआ (लाइव API)",
+        "backend_fallback": "स्टैंडअलोन सुरक्षित मोड में सक्रिय",
+        
+        # Results
+        "risk_low_title": "सामान्य एवं सुरक्षित",
+        "risk_low_desc": "कोई बड़ा संदिग्ध खतरा नहीं मिला। हमेशा की तरह सतर्क रहें।",
+        "risk_med_title": "सावधानी: कुछ संदिग्ध तत्व मिले हैं",
+        "risk_med_desc": "इस संदेश में धोखाधड़ी जैसे संकेत हैं। कोई भी कदम उठाने से पहले जाँच अवश्य करें।",
+        "risk_high_title": "उच्च चेतावनी: यह संदेश फर्जी हो सकता है!",
+        "risk_high_desc": "सावधान! इस संदेश में गंभीर धोखाधड़ी के लक्षण हैं। लिंक न खोलें और कोई विवरण न दें।",
+        "actions_title": "आपको अभी क्या करना चाहिए?",
+        "indicators_title": "संदिग्ध संकेत:",
+        "read_aloud_btn": "परिणाम बोलकर सुनाएँ",
+        "alert_helper_btn": "भरोसेमंद व्यक्ति को संदेश भेजें",
+        "technical_details": "तकनीकी विवरण देखें (मूल्यांकन हेतु)",
+        
+        # Scam Awareness
+        "tips_title": "बुजुर्गों को निशाना बनाने वाले प्रमुख घोटाले",
+        "tips_sub": "धोखेबाजों की चालों को समझें और खुद को सुरक्षित रखें।",
+        "scam_1_title": "'डिजिटल अरेस्ट' का फर्जी नाटक",
+        "scam_1_desc": "धोखेबाज वीडियो कॉल पर पुलिस या CBI बनकर गिरफ्तारी का डर दिखाते हैं। असली पुलिस कभी WhatsApp पर अरेस्ट या जमानत के पैसे नहीं मांगती।",
+        "scam_2_title": "बिजली बिल कटने की फर्जी धमकी",
+        "scam_2_desc": "संदेश आता है कि रात 9:30 बजे बिजली कट जाएगी। हमेशा बिजली बोर्ड के आधिकारिक ऐप से ही बिल भरें।",
+        "scam_3_title": "बैंक KYC और पैन कार्ड अपडेट लिंक",
+        "scam_3_desc": "बैंक खाता बंद होने का डर दिखाकर लिंक भेजा जाता है। बैंक कभी भी bit.ly जैसे लिंक भेजकर पैन या पासवर्ड नहीं मांगते।",
+        "scam_4_title": "रिमोट कंट्रोल ऐप डाउनलोड करने का झांसा",
+        "scam_4_desc": "मदद के बहाने AnyDesk या TeamViewer ऐप डलवाना। इससे वे आपका फोन देखकर पैसे चुरा सकते हैं।",
+        
+        # Trusted Helper
+        "helper_title": "आपका भरोसेमंद सहायक (केयरगिवर)",
+        "helper_sub": "अपने परिवार के किसी सदस्य का विवरण सुरक्षित रखें ताकि जरूरत पड़ने पर एक क्लिक में संपर्क कर सकें।",
+        "helper_name": "सहायक का नाम",
+        "helper_relation": "संबंध (जैसे बेटा, बेटी, पोता)",
+        "helper_phone": "फोन या WhatsApp नंबर",
+        "helper_saved": "भरोसेमंद व्यक्ति का विवरण सहेजा गया।",
+        "helper_whatsapp_msg": "नमस्ते, मुझे एक संदिग्ध संदेश मिला है, कृपया इसे देखकर मेरी मदद करें: ",
+        "emergency_helpline_title": "राष्ट्रीय साइबर अपराध हेल्पलाइन (भारत)",
+        "emergency_helpline_desc": "धोखाधड़ी की स्थिति में तुरंत 1930 पर कॉल करें या cybercrime.gov.in पर शिकायत दर्ज करें।",
+
+        # Settings
+        "settings_title": "आसान पढ़ाई एवं पहुंच सेटिंग्स",
+        "font_size_label": "अक्षरों का आकार",
+        "font_normal": "सामान्य (18px)",
+        "font_large": "बड़ा (22px)",
+        "font_xlarge": "अति विशाल (26px)",
+        "contrast_label": "हाई कंट्रास्ट मोड (गहरा रंग)",
+        "audio_speed_label": "आवाज़ की गति",
+        "restore_defaults": "डिफ़ॉल्ट सेटिंग्स पुनर्स्थापित करें"
+    },
+    "Kannada": {
+        "app_title": "SilverShield AI",
+        "app_tagline": "ನಿಮ್ಮ ಡಿಜಿಟಲ್ ಭದ್ರತಾ ಒಡನಾಡಿ",
+        "home": "ಮುಖಪುಟ",
+        "check_message": "ಸಂದೇಶ ಪರಿಶೀಲಿಸಿ",
+        "safety_tips": "ವಂಚನೆ ಜಾಗೃತಿ",
+        "trusted_helper": "ನಂಬಿಕಸ್ಥ ಸಹಾಯಕ",
+        "safety_bot": "AI ಭದ್ರತಾ ಸಹಾಯಕ",
+        "settings": "ಸುಲಭ ಓದುವಿಕೆ",
+        
+        # Home
+        "welcome_hero": "SilverShield AI ಗೆ ಸುಸ್ವಾಗತ",
+        "welcome_sub": "ಹಿರಿಯ ನಾಗರಿಕರಿಗೆ ವಂಚನೆ ಮತ್ತು ಸೈಬರ್ ಅಪರಾಧಗಳಿಂದ ಸರಳ ರಕ್ಷಣೆ.",
+        "welcome_desc": "ಆನ್‌ಲೈನ್‌ನಲ್ಲಿ ನಿಧಾನವಾಗಿ, ಎಚ್ಚರಿಕೆಯಿಂದ ಇರಲು ನಾವು ನಿಮಗೆ ಸಹಾಯ ಮಾಡುತ್ತೇವೆ. ಯಾವುದೇ ಸಂದೇಶಕ್ಕೆ ಭಯಪಡಬೇಡಿ.",
+        "card_rules_title": "ಸುರಕ್ಷಿತವಾಗಿರಲು 3 ಸುವರ್ಣ ನಿಯಮಗಳು",
+        "rule_1_title": "ನಿಮ್ಮ OTP ಅನ್ನು ಯಾರಿಗೂ ತಿಳಿಸಬೇಡಿ",
+        "rule_1_desc": "ಬ್ಯಾಂಕ್ ಅಧಿಕಾರಿ ಅಥವಾ ಪೊಲೀಸರೆಂದು ಹೇಳಿಕೊಂಡರೂ ನಿಮ್ಮ SMS ಕೋಡ್ ಅನ್ನು ಯಾರಿಗೂ ಹಂಚಿಕೊಳ್ಳಬೇಡಿ.",
+        "rule_2_title": "ಅವಸರದಲ್ಲಿ ಹಣ ಪಾವತಿಸಬೇಡಿ",
+        "rule_2_desc": "ವಂಚಕರು ಭಯ ಹುಟ್ಟಿಸುತ್ತಾರೆ (ವಿದ್ಯುತ್ ಕಡಿತ ಅಥವಾ ಬಂಧನ). ಸಮಾಧಾನವಾಗಿ ಯೋಚಿಸಿ ಖಚಿತಪಡಿಸಿಕೊಳ್ಳಿ.",
+        "rule_3_title": "ನೀವು ನಂಬುವವರನ್ನು ಕೇಳಿ",
+        "rule_3_desc": "ಸಂದೇಹವಿದ್ದರೆ ನಿಮ್ಮ ಕುಟುಂಬದ ಸದಸ್ಯರಿಗೆ ತೋರಿಸಿ ಅಥವಾ 1930 ಸೈಬರ್ ಸಹಾಯವಾಣಿಗೆ ಕರೆ ಮಾಡಿ.",
+
+        # Check Message
+        "check_title": "ಸಂದೇಶ ಅಥವಾ ಲಿಂಕ್ ಪರಿಶೀಲಿಸಿ",
+        "check_subtitle": "ಯಾವುದೇ ಅನುಮಾನಾಸ್ಪದ SMS, ವಾಟ್ಸಾಪ್ ಸಂದೇಶ ಅಥವಾ ಲಿಂಕ್ ಹಾಕಿ ಪರಿಶೀಲಿಸಿ.",
+        "sample_prompts_label": "ಮಾದರಿ ಸಂದೇಶಗಳು:",
+        "sample_legit": "ಕುಟುಂಬದ ಸಾಮಾನ್ಯ ಸಂದೇಶ",
+        "sample_sbi": "ಬ್ಯಾಂಕ್ KYC ಸ್ಥಗಿತ ವಂಚನೆ",
+        "sample_power": "ವಿದ್ಯುತ್ ಸಂಪರ್ಕ ಕಡಿತ ವಂಚನೆ",
+        "sample_prize": "ಬಹುಮಾನ / ಲಾಟರಿ ಲಿಂಕ್ ವಂಚನೆ",
+        "sample_otp": "ನಕಲಿ ಬ್ಯಾಂಕ್ ಅಧಿಕಾರಿಯಿಂದ OTP ಬೇಡಿಕೆ",
+        "message_box_label": "ನಿಮ್ಮ ಸಂದೇಶವನ್ನು ಇಲ್ಲಿ ಹಾಕಿ:",
+        "message_box_placeholder": "ಉದಾ: ನಿಮ್ಮ ಬ್ಯಾಂಕ್ ಖಾತೆ ಇಂದು ಬ್ಲಾಕ್ ಆಗುತ್ತದೆ. ಲಿಂಕ್ ಕ್ಲಿಕ್ ಮಾಡಿ...",
+        "btn_check": "ಸಂದೇಶ ಪರಿಶೀಲಿಸಿ",
+        "btn_clear": "ಅಳಿಸಿ",
+        "btn_voice_input": "ಧ್ವನಿ ಮೂಲಕ ಸಂದೇಶ ದಾಖಲಿಸಿ",
+        "backend_connected": "ಕೇಂದ್ರ ಅಪಾಯ ವಿಶ್ಲೇಷಣೆ ವ್ಯವಸ್ಥೆಗೆ ಸಂಪರ್ಕಿಸಲಾಗಿದೆ (Live API)",
+        "backend_fallback": "ಸ್ಟ್ಯಾಂಡ್‌ಅಲೋನ್ ಸುರಕ್ಷಿತ ಮೋಡ್‌ನಲ್ಲಿ ಕಾರ್ಯನಿರ್ವಹಿಸುತ್ತಿದೆ",
+        
+        # Results
+        "risk_low_title": "ಸಾಮಾನ್ಯ ಮತ್ತು ಸುರಕ್ಷಿತ",
+        "risk_low_desc": "ಯಾವುದೇ ಪ್ರಮುಖ ಅನುಮಾನಾಸ್ಪದ ಅಂಶ ಕಂಡುಬಂದಿಲ್ಲ. ಎಂದಿನಂತೆ ಎಚ್ಚರಿಕೆಯಿಂದಿರಿ.",
+        "risk_med_title": "ಎಚ್ಚರಿಕೆ: ಅನುಮಾನಾಸ್ಪದ ಅಂಶಗಳು ಕಂಡುಬಂದಿವೆ",
+        "risk_med_desc": "ಈ ಸಂದೇಶದಲ್ಲಿ ಕೆಲವು ಸಂಶಯಾಸ್ಪದ ಸೂಚನೆಗಳಿವೆ. ದೃಢೀಕರಿಸದೆ ಯಾವುದೇ ಕ್ರಮ ತೆಗೆದುಕೊಳ್ಳಬೇಡಿ.",
+        "risk_high_title": "ತೀವ್ರ ಎಚ್ಚರಿಕೆ: ಇದು ವಂಚನೆಯ ಸಂದೇಶವಾಗಿರಬಹುದು!",
+        "risk_high_desc": "ಎಚ್ಚರ! ಇದರಲ್ಲಿ ಗಂಭೀರ ವಂಚನೆಯ ಲಕ್ಷಣಗಳಿವೆ. ಲಿಂಕ್ ಕ್ಲಿಕ್ ಮಾಡಬೇಡಿ ಅಥವಾ ವಿವರ ನೀಡಬೇಡಿ.",
+        "actions_title": "ನೀವು ಈಗ ಏನು ಮಾಡಬೇಕು?",
+        "indicators_title": "ಅಪಾಯದ ಲಕ್ಷಣಗಳು:",
+        "read_aloud_btn": "ಫಲಿತಾಂಶವನ್ನು ಆಡಿಯೋ ಮೂಲಕ ಕೇಳಿ",
+        "alert_helper_btn": "ನಂಬಿಕಸ್ಥ ಸಹಾಯಕರಿಗೆ ಸಂದೇಶ ಕಳುಹಿಸಿ",
+        "technical_details": "ತಾಂತ್ರಿಕ ವಿವರಗಳು",
+        
+        # Scam Awareness
+        "tips_title": "ಹಿರಿಯರನ್ನು ಗುರಿಯಾಗಿಸುವ ಪ್ರಮುಖ ವಂಚನೆಗಳು",
+        "tips_sub": "ವಂಚಕರ ತಂತ್ರಗಳನ್ನು ತಿಳಿದುಕೊಂಡು ಸುರಕ್ಷಿತವಾಗಿರಿ.",
+        "scam_1_title": "'ಡಿಜಿಟಲ್ ಅರೆಸ್ಟ್' ನಕಲಿ ಬೆದರಿಕೆ",
+        "scam_1_desc": "ಪೊಲೀಸ್ ಅಥವಾ ಸಿಬಿಐ ಎಂದು ವಿಡಿಯೋ ಕಾಲ್ ಮಾಡಿ ಹೆದರಿಸುತ್ತಾರೆ. ನಿಜವಾದ ಪೊಲೀಸರು ಎಂದಿಗೂ ವಾಟ್ಸಾಪ್‌ನಲ್ಲಿ ಹಣ ಕೇಳುವುದಿಲ್ಲ.",
+        "scam_2_title": "ವಿದ್ಯುತ್ ಬಿಲ್ ಕಡಿತದ ನಕಲಿ ಸಂದೇಶ",
+        "scam_2_desc": "ಇಂದು ರಾತ್ರಿ ಕರೆಂಟ್ ಕಟ್ ಆಗುತ್ತದೆ ಎಂಬ ಸಂದೇಶ. ಯಾವಾಗಲೂ ವಿದ್ಯುತ್ ಮಂಡಳಿಯ ಅಧಿಕೃತ ಆ್ಯಪ್ ಮೂಲಕ ಮಾತ್ರ ಪಾವತಿಸಿ.",
+        "scam_3_title": "ಬ್ಯಾಂಕ್ KYC ಮತ್ತು ಪ್ಯಾನ್ ಕಾರ್ಡ್ ಲಿಂಕ್",
+        "scam_3_desc": "ಖಾತೆ ರದ್ದಾಗುವುದಾಗಿ ಹೆದರಿಸಿ ಕಳುಹಿಸುವ ಲಿಂಕ್. ಬ್ಯಾಂಕ್‌ಗಳು ಎಂದಿಗೂ bit.ly ಲಿಂಕ್ ಕಳುಹಿಸಿ ಪಾಸ್‌ವರ್ಡ್ ಕೇಳುವುದಿಲ್ಲ.",
+        "scam_4_title": "ರಿಮೋಟ್ ಸ್ಕ್ರೀನ್ ಶೇರಿಂಗ್ ಆ್ಯಪ್ ತಂತ್ರ",
+        "scam_4_desc": "AnyDesk ಅಥವಾ TeamViewer ಇನ್‌ಸ್ಟಾಲ್ ಮಾಡಲು ಹೇಳುವುದು. ಇದರಿಂದ ನಿಮ್ಮ ಫೋನ್ ನೋಡಿ ಹಣ ಕದಿಯುತ್ತಾರೆ.",
+        
+        # Trusted Helper
+        "helper_title": "ನಿಮ್ಮ ನಂಬಿಕಸ್ಥ ಸಹಾಯಕ",
+        "helper_sub": "ತುರ್ತು ಸಂದರ್ಭದಲ್ಲಿ ಸಂಪರ್ಕಿಸಲು ನಿಮ್ಮ ಕುಟುಂಬದ ಸದಸ್ಯರ ವಿವರ ಉಳಿಸಿ.",
+        "helper_name": "ಸಹಾಯಕರ ಹೆಸರು",
+        "helper_relation": "ಸಂಬಂಧ (ಉದಾ: ಮಗ, ಮಗಳು, ಮೊಮ್ಮಗ)",
+        "helper_phone": "ದೂರವಾಣಿ ಅಥವಾ ವಾಟ್ಸಾಪ್ ಸಂಖ್ಯೆ",
+        "helper_saved": "ನಂಬಿಕಸ್ಥ ವ್ಯಕ್ತಿಯ ವಿವರಗಳನ್ನು ಉಳಿಸಲಾಗಿದೆ.",
+        "helper_whatsapp_msg": "ನಮಸ್ಕಾರ, ನನಗೆ ಒಂದು ಅನುಮಾನಾಸ್ಪದ ಸಂದೇಶ ಬಂದಿದೆ, ದಯವಿಟ್ಟು ಪರಿಶೀಲಿಸಿ ಸಹಾಯ ಮಾಡಿ: ",
+        "emergency_helpline_title": "ರಾಷ್ಟ್ರೀಯ ಸೈಬರ್ ಕ್ರೈಮ್ ಸಹಾಯವಾಣಿ (ಭಾರತ)",
+        "emergency_helpline_desc": "ವಂಚನೆಯಾದರೆ ತಕ್ಷಣ 1930 ಗೆ ಕರೆ ಮಾಡಿ ಅಥವಾ cybercrime.gov.in ಗೆ ಭೇಟಿ ನೀಡಿ.",
+
+        # Settings
+        "settings_title": "ಸುಲಭ ಓದುವಿಕೆ ಸೆಟ್ಟಿಂಗ್‌ಗಳು",
+        "font_size_label": "ಅಕ್ಷರಗಳ ಗಾತ್ರ",
+        "font_normal": "ಸಾಮಾನ್ಯ (18px)",
+        "font_large": "ದೊಡ್ಡದು (22px)",
+        "font_xlarge": "ಅತಿ ದೊಡ್ಡದು (26px)",
+        "contrast_label": "ಹೈ ಕಾಂಟ್ರಾಸ್ಟ್ ಮೋಡ್ (ಗಾಢ ಬಣ್ಣ)",
+        "audio_speed_label": "ಧ್ವನಿಯ ವೇಗ",
+        "restore_defaults": "ಡೀಫಾಲ್ಟ್ ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ಮರುಸ್ಥಾಪಿಸಿ"
+    }
+}
