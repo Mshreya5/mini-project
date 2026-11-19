@@ -40,7 +40,7 @@ def main():
             proc = run_service(f'"{python_bin}" -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload', "Member 4 FastAPI Backend")
             processes.append(proc)
         elif args.frontend_only:
-            proc = run_service(f'"{python_bin}" -m streamlit run silvershield_frontend.py', "Member 1 Streamlit Frontend")
+            proc = run_service(f'"{python_bin}" -m streamlit run silvershield_frontend.py --server.headless true --browser.gatherUsageStats false', "Member 1 Streamlit Frontend")
             processes.append(proc)
         elif args.mocks_only:
             p2 = run_service(f'"{python_bin}" -m uvicorn ai_module.api.main:app --host 127.0.0.1 --port 8001', "Member 2 ML Scam Service")
@@ -57,7 +57,7 @@ def main():
             p4 = run_service(f'"{python_bin}" -m uvicorn app.main:app --host 127.0.0.1 --port 8000', "Member 4 Central Integration API (Port 8000)")
             time.sleep(1.5)
 
-            p1 = run_service(f'"{python_bin}" -m streamlit run silvershield_frontend.py --server.port 8501', "Member 1 Streamlit Frontend (Port 8501)")
+            p1 = run_service(f'"{python_bin}" -m streamlit run silvershield_frontend.py --server.port 8501 --server.headless true --browser.gatherUsageStats false', "Member 1 Streamlit Frontend (Port 8501)")
             processes.extend([p2, p3, p4, p1])
 
             print("\n✅ All services running!")
