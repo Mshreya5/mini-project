@@ -1,61 +1,50 @@
 # Virtual Environments
 .venv/
 venv/
+env/
 ENV/
 
-# Python cache
+# Python Cache & Bytecode
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Testing & Coverage
 .pytest_cache/
 .coverage
 htmlcov/
-
-# Notebooks checkpoints
-.ipynb_checkpoints/
 
 # Logs
 *.log
 api_startup.log
 
-# Raw data downloads and zips
-data/*.zip
-data/raw/
+# Environment & Secrets (CRITICAL)
+.env
+.env.*
+*.pem
+*.key
 
-# Model artifacts (large binary files)
-artifacts/*.joblib
-ai_module/models/*.joblib
-
-# Generated report images and evaluation reports
-reports/*.png
-reports/*.md
-ai_module/reports/
-
-# Documentation and personal notes
-AI_ML_COMPLETE_TECHNICAL_DOCUMENTATION.md
-*.pdf
-*.pptx
-*.ppt
-
-# Dataset CSV (generated from raw TSV at runtime)
-ai_module/dataset/sms_scam_dataset.csv
-
-# OS generated
-.DS_Store
-Thumbs.db
-
-# IDE
+# IDEs & System
 .vscode/
 .idea/
-
-# Environment / secrets
-.env
-*.env
-
-.venv/
-__pycache__/
-*.pyc
-.env
-
-echo .page_pid >> .gitignore
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+.ipynb_checkpoints/
