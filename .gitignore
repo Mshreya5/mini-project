@@ -30,6 +30,9 @@ wheels/
 .coverage
 htmlcov/
 
+# Package manager locks
+uv.lock
+
 # Logs
 *.log
 api_startup.log

@@ -101,6 +101,10 @@ def create_app(
             "docs": "/docs",
         }
 
+    @app.get("/health", include_in_schema=False)
+    def _health(request: Request) -> JSONResponse:
+        return JSONResponse(status_code=200, content={"status": "ok", "service": "risk-aggregation-service", "version": __version__})
+
     return app
 
 

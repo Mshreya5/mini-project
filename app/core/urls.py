@@ -52,8 +52,6 @@ def normalise_url(raw: str) -> str | None:
         if explicit_scheme.group(1).lower() not in ("http", "https"):
             return None
     else:
-        # Catches ``javascript:`` / ``data:`` style values. A colon followed by a
-        # digit is a port, not a scheme.
         colon_scheme = re.match(r"^([a-zA-Z][a-zA-Z0-9+.\-]*):(?![0-9])", candidate)
         if colon_scheme and colon_scheme.group(1).lower() not in ("http", "https"):
             return None

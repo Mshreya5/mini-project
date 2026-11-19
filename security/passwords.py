@@ -10,8 +10,6 @@ from __future__ import annotations
 import argon2
 from argon2.exceptions import InvalidHashError, VerificationError, VerifyMismatchError
 
-# Baseline OWASP-recommended parameters:
-# time_cost: 2 iterations, memory_cost: 64 MiB (65536 KiB), parallelism: 1 thread
 _password_hasher = argon2.PasswordHasher(
     time_cost=2,
     memory_cost=65536,

@@ -90,7 +90,50 @@ def normalise_level(value: Any) -> str:
 
 
 def parse_url_payload(payload: Mapping[str, Any], url: str) -> UrlAnalysis | None:
-    """Read a URL analysis payload, returning None when no verdict is present."""
+    results = payload.get("results")
+    if isinstance(results, list):
+        if not results:
+            return UrlAnalysis(level=URL_SAFE, flags=(), url=url, score=0.0)
+        first = results[0]
+        if isinstance(first, dict):
+            raw_suspicious = first.get("suspicious", False)
+            risk_score = int(first.get("risk_score", 0))
+            if risk_score >= 3:
+                raw_level = URL_MALICIOUS
+            elif raw_suspicious:
+                raw_level = URL_SUSPICIOUS
+            else:
+                raw_level = URL_SAFE
+
+            flags = []
+            for ind in first.get("risk_indicators", []):
+                ind_lower = str(ind).lower()
+                if "ip address" in ind_lower:
+                    flags.append("ip_address")
+                elif "shortener" in ind_lower:
+                    flags.append("shortened")
+                elif "brand impersonation" in ind_lower or "homoglyph" in ind_lower or "subdomain" in ind_lower:
+                    flags.append("lookalike")
+                elif "top-level domain" in ind_lower:
+                    flags.append("suspicious_tld")
+                elif "path keywords" in ind_lower:
+                    flags.append("phishing_keywords")
+                elif "redirect" in ind_lower:
+                    flags.append("redirect")
+                elif "at symbol" in ind_lower:
+                    flags.append("lookalike")
+
+            parsed_url = str(first.get("url", url))
+            if parsed_url.startswith("http://"):
+                flags.append("no_https")
+
+            return UrlAnalysis(
+                level=raw_level,
+                flags=tuple(flags),
+                url=url,
+                score=min(1.0, round(risk_score * 0.25, 4)),
+            )
+
     raw_level = first_present(payload, _LEVEL_KEYS)
 
     flags = list(as_text_list(first_present(payload, _FLAG_KEYS)))
@@ -124,8 +167,6 @@ def parse_url_payload(payload: Mapping[str, Any], url: str) -> UrlAnalysis | Non
 
     level = normalise_level(raw_level)
     if level == URL_UNKNOWN:
-        # The module answered, but with a verdict this service cannot interpret.
-        # That is treated as unusable rather than as a clean result.
         return None
 
     return UrlAnalysis(
@@ -151,7 +192,7 @@ class UrlAnalyzerClient:
         )
 
     def analyze(self, url: str) -> RemoteCallResult[UrlAnalysis]:
-        result = self._http.post({"url": url})
+        result = self._http.post({"message": url, "url": url, "consent_given": True})
         if result.state is not ModuleState.OK or result.data is None:
             return RemoteCallResult(
                 state=result.state,

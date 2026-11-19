@@ -47,6 +47,7 @@ _CONFIDENCE_KEYS = (
     "score",
 )
 _SIGNAL_KEYS = (
+    "suspicious_indicators",
     "signals",
     "signal",
     "keywords",

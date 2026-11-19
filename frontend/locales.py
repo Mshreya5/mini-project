@@ -20,8 +20,6 @@ TRANSLATIONS = {
         "trusted_helper": "Trusted Helper",
         "safety_bot": "AI Companion",
         "settings": "Accessibility Settings",
-        
-        # Home
         "welcome_hero": "Welcome to SilverShield AI",
         "welcome_sub": "Simple, accessible protection against fraud, suspicious messages, and cyber threats.",
         "welcome_desc": "We help you pause, verify, and stay safe online. You do not have to face worrying messages alone.",
@@ -32,8 +30,6 @@ TRANSLATIONS = {
         "rule_2_desc": "Scammers create false panic (threat of power cut or arrest). Take a deep breath and verify first.",
         "rule_3_title": "Ask someone you trust",
         "rule_3_desc": "When unsure, show the message to your trusted family helper or dial 1930 for cyber helpline assistance.",
-
-        # Check Message
         "check_title": "Check a Message or Link",
         "check_subtitle": "Paste any suspicious SMS, WhatsApp message, or website link. We will check it safely.",
         "sample_prompts_label": "Try an example message:",
@@ -49,8 +45,6 @@ TRANSLATIONS = {
         "btn_voice_input": "Speak Message (Voice Input)",
         "backend_connected": "Connected to Central Risk Aggregator (Live API)",
         "backend_fallback": "Companion Running in Standalone Safe Mode",
-        
-        # Results
         "risk_low_title": "Safe & Normal",
         "risk_low_desc": "No major suspicious indicators detected. Stay cautious as usual.",
         "risk_med_title": "Caution: Suspicious Elements Detected",
@@ -62,8 +56,6 @@ TRANSLATIONS = {
         "read_aloud_btn": "Read Result Aloud",
         "alert_helper_btn": "Ask My Trusted Helper for Help",
         "technical_details": "View Technical Breakdown (For Caregivers & Evaluators)",
-        
-        # Scam Awareness
         "tips_title": "Common Scams Targeting Seniors",
         "tips_sub": "Learn how scammers operate and how to spot their tricks in seconds.",
         "scam_1_title": "The 'Digital Arrest' Scam",
@@ -74,8 +66,6 @@ TRANSLATIONS = {
         "scam_3_desc": "Messages claiming your bank card or PAN is blocked, with a link to update it. Banks never send shortened links (like bit.ly) to collect PAN or passwords.",
         "scam_4_title": "Remote Screen Sharing App Trap",
         "scam_4_desc": "A caller asking you to install AnyDesk, TeamViewer, or QuickSupport to 'help' you. Once installed, they can see your phone and steal your money.",
-        
-        # Trusted Helper
         "helper_title": "Your Trusted Helper (Caregiver)",
         "helper_sub": "Save the contact details of a family member you trust, so you can reach them in one tap.",
         "helper_name": "Helper's Name",
@@ -85,8 +75,6 @@ TRANSLATIONS = {
         "helper_whatsapp_msg": "Hello, I received a suspicious message and would like you to check it for me on SilverShield AI: ",
         "emergency_helpline_title": "National Cyber Crime Helpline (India)",
         "emergency_helpline_desc": "If you lost money or suspect fraud, dial 1930 immediately or visit cybercrime.gov.in.",
-
-        # Settings
         "settings_title": "Easy Reading & Accessibility",
         "font_size_label": "Text Size",
         "font_normal": "Standard (18px)",
@@ -105,8 +93,6 @@ TRANSLATIONS = {
         "trusted_helper": "भरोसेमंद सहायक",
         "safety_bot": "AI सुरक्षा सहायक",
         "settings": "आसान पढ़ाई सेटिंग्स",
-        
-        # Home
         "welcome_hero": "SilverShield AI में आपका स्वागत है",
         "welcome_sub": "धोखाधड़ी, फर्जी संदेशों और साइबर अपराध से बुजुर्गों की सरल और सुरक्षित रक्षा।",
         "welcome_desc": "हम आपको ठहरने, जाँचने और सुरक्षित रहने में मदद करते हैं। आपको किसी भी संदेहास्पद संदेश से अकेले घबराने की ज़रूरत नहीं है।",
@@ -117,8 +103,6 @@ TRANSLATIONS = {
         "rule_2_desc": "धोखेबाज डर का माहौल बनाते हैं (जैसे बिजली कटने या गिरफ्तारी की धमकी)। शांत रहें और पहले पुष्टि करें।",
         "rule_3_title": "अपने भरोसेमंद व्यक्ति से पूछें",
         "rule_3_desc": "संदेह होने पर संदेश अपने परिवार के सदस्य को दिखाएं या 1930 साइबर हेल्पलाइन पर कॉल करें।",
-
-        # Check Message
         "check_title": "संदेश या लिंक की जाँच करें",
         "check_subtitle": "कोई भी संदिग्ध SMS, WhatsApp संदेश या वेबसाइट लिंक यहाँ डालें। हम सुरक्षित रूप से जाँच करेंगे।",
         "sample_prompts_label": "नमूना संदेश चुनें:",
@@ -134,8 +118,6 @@ TRANSLATIONS = {
         "btn_voice_input": "बोलकर संदेश दर्ज करें",
         "backend_connected": "केंद्रीय जोखिम प्रणाली से जुड़ा हुआ (लाइव API)",
         "backend_fallback": "स्टैंडअलोन सुरक्षित मोड में सक्रिय",
-        
-        # Results
         "risk_low_title": "सामान्य एवं सुरक्षित",
         "risk_low_desc": "कोई बड़ा संदिग्ध खतरा नहीं मिला। हमेशा की तरह सतर्क रहें।",
         "risk_med_title": "सावधानी: कुछ संदिग्ध तत्व मिले हैं",
@@ -147,8 +129,6 @@ TRANSLATIONS = {
         "read_aloud_btn": "परिणाम बोलकर सुनाएँ",
         "alert_helper_btn": "भरोसेमंद व्यक्ति को संदेश भेजें",
         "technical_details": "तकनीकी विवरण देखें (मूल्यांकन हेतु)",
-        
-        # Scam Awareness
         "tips_title": "बुजुर्गों को निशाना बनाने वाले प्रमुख घोटाले",
         "tips_sub": "धोखेबाजों की चालों को समझें और खुद को सुरक्षित रखें।",
         "scam_1_title": "'डिजिटल अरेस्ट' का फर्जी नाटक",
@@ -159,8 +139,6 @@ TRANSLATIONS = {
         "scam_3_desc": "बैंक खाता बंद होने का डर दिखाकर लिंक भेजा जाता है। बैंक कभी भी bit.ly जैसे लिंक भेजकर पैन या पासवर्ड नहीं मांगते।",
         "scam_4_title": "रिमोट कंट्रोल ऐप डाउनलोड करने का झांसा",
         "scam_4_desc": "मदद के बहाने AnyDesk या TeamViewer ऐप डलवाना। इससे वे आपका फोन देखकर पैसे चुरा सकते हैं।",
-        
-        # Trusted Helper
         "helper_title": "आपका भरोसेमंद सहायक (केयरगिवर)",
         "helper_sub": "अपने परिवार के किसी सदस्य का विवरण सुरक्षित रखें ताकि जरूरत पड़ने पर एक क्लिक में संपर्क कर सकें।",
         "helper_name": "सहायक का नाम",
@@ -170,8 +148,6 @@ TRANSLATIONS = {
         "helper_whatsapp_msg": "नमस्ते, मुझे एक संदिग्ध संदेश मिला है, कृपया इसे देखकर मेरी मदद करें: ",
         "emergency_helpline_title": "राष्ट्रीय साइबर अपराध हेल्पलाइन (भारत)",
         "emergency_helpline_desc": "धोखाधड़ी की स्थिति में तुरंत 1930 पर कॉल करें या cybercrime.gov.in पर शिकायत दर्ज करें।",
-
-        # Settings
         "settings_title": "आसान पढ़ाई एवं पहुंच सेटिंग्स",
         "font_size_label": "अक्षरों का आकार",
         "font_normal": "सामान्य (18px)",
@@ -190,8 +166,6 @@ TRANSLATIONS = {
         "trusted_helper": "ನಂಬಿಕಸ್ಥ ಸಹಾಯಕ",
         "safety_bot": "AI ಭದ್ರತಾ ಸಹಾಯಕ",
         "settings": "ಸುಲಭ ಓದುವಿಕೆ",
-        
-        # Home
         "welcome_hero": "SilverShield AI ಗೆ ಸುಸ್ವಾಗತ",
         "welcome_sub": "ಹಿರಿಯ ನಾಗರಿಕರಿಗೆ ವಂಚನೆ ಮತ್ತು ಸೈಬರ್ ಅಪರಾಧಗಳಿಂದ ಸರಳ ರಕ್ಷಣೆ.",
         "welcome_desc": "ಆನ್‌ಲೈನ್‌ನಲ್ಲಿ ನಿಧಾನವಾಗಿ, ಎಚ್ಚರಿಕೆಯಿಂದ ಇರಲು ನಾವು ನಿಮಗೆ ಸಹಾಯ ಮಾಡುತ್ತೇವೆ. ಯಾವುದೇ ಸಂದೇಶಕ್ಕೆ ಭಯಪಡಬೇಡಿ.",
@@ -202,8 +176,6 @@ TRANSLATIONS = {
         "rule_2_desc": "ವಂಚಕರು ಭಯ ಹುಟ್ಟಿಸುತ್ತಾರೆ (ವಿದ್ಯುತ್ ಕಡಿತ ಅಥವಾ ಬಂಧನ). ಸಮಾಧಾನವಾಗಿ ಯೋಚಿಸಿ ಖಚಿತಪಡಿಸಿಕೊಳ್ಳಿ.",
         "rule_3_title": "ನೀವು ನಂಬುವವರನ್ನು ಕೇಳಿ",
         "rule_3_desc": "ಸಂದೇಹವಿದ್ದರೆ ನಿಮ್ಮ ಕುಟುಂಬದ ಸದಸ್ಯರಿಗೆ ತೋರಿಸಿ ಅಥವಾ 1930 ಸೈಬರ್ ಸಹಾಯವಾಣಿಗೆ ಕರೆ ಮಾಡಿ.",
-
-        # Check Message
         "check_title": "ಸಂದೇಶ ಅಥವಾ ಲಿಂಕ್ ಪರಿಶೀಲಿಸಿ",
         "check_subtitle": "ಯಾವುದೇ ಅನುಮಾನಾಸ್ಪದ SMS, ವಾಟ್ಸಾಪ್ ಸಂದೇಶ ಅಥವಾ ಲಿಂಕ್ ಹಾಕಿ ಪರಿಶೀಲಿಸಿ.",
         "sample_prompts_label": "ಮಾದರಿ ಸಂದೇಶಗಳು:",
@@ -219,8 +191,6 @@ TRANSLATIONS = {
         "btn_voice_input": "ಧ್ವನಿ ಮೂಲಕ ಸಂದೇಶ ದಾಖಲಿಸಿ",
         "backend_connected": "ಕೇಂದ್ರ ಅಪಾಯ ವಿಶ್ಲೇಷಣೆ ವ್ಯವಸ್ಥೆಗೆ ಸಂಪರ್ಕಿಸಲಾಗಿದೆ (Live API)",
         "backend_fallback": "ಸ್ಟ್ಯಾಂಡ್‌ಅಲೋನ್ ಸುರಕ್ಷಿತ ಮೋಡ್‌ನಲ್ಲಿ ಕಾರ್ಯನಿರ್ವಹಿಸುತ್ತಿದೆ",
-        
-        # Results
         "risk_low_title": "ಸಾಮಾನ್ಯ ಮತ್ತು ಸುರಕ್ಷಿತ",
         "risk_low_desc": "ಯಾವುದೇ ಪ್ರಮುಖ ಅನುಮಾನಾಸ್ಪದ ಅಂಶ ಕಂಡುಬಂದಿಲ್ಲ. ಎಂದಿನಂತೆ ಎಚ್ಚರಿಕೆಯಿಂದಿರಿ.",
         "risk_med_title": "ಎಚ್ಚರಿಕೆ: ಅನುಮಾನಾಸ್ಪದ ಅಂಶಗಳು ಕಂಡುಬಂದಿವೆ",
@@ -232,8 +202,6 @@ TRANSLATIONS = {
         "read_aloud_btn": "ಫಲಿತಾಂಶವನ್ನು ಆಡಿಯೋ ಮೂಲಕ ಕೇಳಿ",
         "alert_helper_btn": "ನಂಬಿಕಸ್ಥ ಸಹಾಯಕರಿಗೆ ಸಂದೇಶ ಕಳುಹಿಸಿ",
         "technical_details": "ತಾಂತ್ರಿಕ ವಿವರಗಳು",
-        
-        # Scam Awareness
         "tips_title": "ಹಿರಿಯರನ್ನು ಗುರಿಯಾಗಿಸುವ ಪ್ರಮುಖ ವಂಚನೆಗಳು",
         "tips_sub": "ವಂಚಕರ ತಂತ್ರಗಳನ್ನು ತಿಳಿದುಕೊಂಡು ಸುರಕ್ಷಿತವಾಗಿರಿ.",
         "scam_1_title": "'ಡಿಜಿಟಲ್ ಅರೆಸ್ಟ್' ನಕಲಿ ಬೆದರಿಕೆ",
@@ -244,8 +212,6 @@ TRANSLATIONS = {
         "scam_3_desc": "ಖಾತೆ ರದ್ದಾಗುವುದಾಗಿ ಹೆದರಿಸಿ ಕಳುಹಿಸುವ ಲಿಂಕ್. ಬ್ಯಾಂಕ್‌ಗಳು ಎಂದಿಗೂ bit.ly ಲಿಂಕ್ ಕಳುಹಿಸಿ ಪಾಸ್‌ವರ್ಡ್ ಕೇಳುವುದಿಲ್ಲ.",
         "scam_4_title": "ರಿಮೋಟ್ ಸ್ಕ್ರೀನ್ ಶೇರಿಂಗ್ ಆ್ಯಪ್ ತಂತ್ರ",
         "scam_4_desc": "AnyDesk ಅಥವಾ TeamViewer ಇನ್‌ಸ್ಟಾಲ್ ಮಾಡಲು ಹೇಳುವುದು. ಇದರಿಂದ ನಿಮ್ಮ ಫೋನ್ ನೋಡಿ ಹಣ ಕದಿಯುತ್ತಾರೆ.",
-        
-        # Trusted Helper
         "helper_title": "ನಿಮ್ಮ ನಂಬಿಕಸ್ಥ ಸಹಾಯಕ",
         "helper_sub": "ತುರ್ತು ಸಂದರ್ಭದಲ್ಲಿ ಸಂಪರ್ಕಿಸಲು ನಿಮ್ಮ ಕುಟುಂಬದ ಸದಸ್ಯರ ವಿವರ ಉಳಿಸಿ.",
         "helper_name": "ಸಹಾಯಕರ ಹೆಸರು",
@@ -255,8 +221,6 @@ TRANSLATIONS = {
         "helper_whatsapp_msg": "ನಮಸ್ಕಾರ, ನನಗೆ ಒಂದು ಅನುಮಾನಾಸ್ಪದ ಸಂದೇಶ ಬಂದಿದೆ, ದಯವಿಟ್ಟು ಪರಿಶೀಲಿಸಿ ಸಹಾಯ ಮಾಡಿ: ",
         "emergency_helpline_title": "ರಾಷ್ಟ್ರೀಯ ಸೈಬರ್ ಕ್ರೈಮ್ ಸಹಾಯವಾಣಿ (ಭಾರತ)",
         "emergency_helpline_desc": "ವಂಚನೆಯಾದರೆ ತಕ್ಷಣ 1930 ಗೆ ಕರೆ ಮಾಡಿ ಅಥವಾ cybercrime.gov.in ಗೆ ಭೇಟಿ ನೀಡಿ.",
-
-        # Settings
         "settings_title": "ಸುಲಭ ಓದುವಿಕೆ ಸೆಟ್ಟಿಂಗ್‌ಗಳು",
         "font_size_label": "ಅಕ್ಷರಗಳ ಗಾತ್ರ",
         "font_normal": "ಸಾಮಾನ್ಯ (18px)",

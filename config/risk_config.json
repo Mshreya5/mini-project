@@ -189,7 +189,15 @@
     "verify_account": "CREDENTIAL_LINK_REQUEST",
     "personal_information": "SENSITIVE_INFO_REQUEST",
     "identity_document": "SENSITIVE_INFO_REQUEST",
-    "kyc_update": "SENSITIVE_INFO_REQUEST"
+    "kyc_update": "SENSITIVE_INFO_REQUEST",
+    "urgent_payment": "PAYMENT_REQUEST",
+    "urgent_payment_request": "PAYMENT_REQUEST",
+    "fake_prize": "PRIZE_BAIT",
+    "fake_lottery_or_prize": "PRIZE_BAIT",
+    "bank_impersonation": "IMPERSONATION",
+    "account_verification": "CREDENTIAL_LINK_REQUEST",
+    "suspicious_account_verification": "CREDENTIAL_LINK_REQUEST",
+    "threatening_account_suspension": "ACCOUNT_THREAT"
   },
   "url_flag_map": {
     "shortened": "SHORTENED_URL",

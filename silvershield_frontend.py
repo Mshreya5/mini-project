@@ -360,7 +360,6 @@ textarea, input[type="text"] {{
 </style>
 """, unsafe_allow_html=True)
 
-# ── SVG ICONS ──
 ICONS = {
     "shield":  '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
     "lock":    '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#1565C0" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
@@ -419,39 +418,16 @@ def check_backend_health():
 
 
 def run_local_fallback_assessment(message: str, lang: str):
-    from backend.risk_engine import RiskAggregationEngine
-    from backend.warning_generator import WarningGenerator
-    from backend.integrations import IntegrationClient
-    engine = RiskAggregationEngine()
-    urls = IntegrationClient.extract_urls(message)
-    has_url = len(urls) > 0
-    tl = message.lower()
-    is_scam = any(w in tl for w in ["blocked","suspended","kyc","otp","police","arrest","lottery","won","crore"])
-    is_sus  = any("bit.ly" in u or "tinyurl" in u or "192.168" in u for u in urls)
-    ml_pred = "SCAM" if is_scam else "LEGITIMATE"
-    ml_conf = 0.88 if is_scam else 0.92
-    url_risk = "SUSPICIOUS" if is_sus else ("SAFE" if has_url else "NO_URL")
-    assessment = engine.aggregate_risk(
-        message=message, ml_prediction=ml_pred, ml_confidence=ml_conf,
-        ml_triggers=["Keyword Scam Pattern Detected"] if is_scam else [],
-        ml_available=True, url_risk=url_risk,
-        url_indicators=["Shortened / Masked URL"] if is_sus else [],
-        urls_found=urls, url_available=True)
-    overall_risk = assessment["overall_risk"]
-    indicators   = assessment["risk_indicators"]
-    warning  = WarningGenerator.generate_warning(overall_risk, indicators, lang)
-    actions  = WarningGenerator.generate_recommended_actions(
-        overall_risk, indicators, has_url=has_url, message_text=message, language=lang)
-    return {
-        "overall_risk": overall_risk.value, "message_prediction": ml_pred,
-        "url_risk": url_risk, "risk_indicators": indicators,
-        "warning": warning, "recommended_actions": actions,
-        "risk_score": assessment["composite_score"],
-        "module_status": {"ml_service": "STANDALONE_FALLBACK", "url_service": "STANDALONE_FALLBACK"}
-    }
+    from app.core.orchestrator import RiskAggregator
+    from app.schemas import AnalyzeRequest
+    from app.settings import Settings, get_risk_config
+    config = get_risk_config()
+    settings = Settings.from_env()
+    aggregator = RiskAggregator(config=config, settings=settings)
+    resp = aggregator.analyze(AnalyzeRequest(message=message, language=lang))
+    return resp.model_dump()
 
 
-# ── SIDEBAR ──
 with st.sidebar:
     st.markdown(f"""
     <div class="ss-brand">
@@ -495,7 +471,6 @@ with st.sidebar:
     st.markdown(f"<div style='font-size:clamp(11px,{fs-4}px,{fs-2}px);color:#94A3B8;margin-top:14px;line-height:1.6;'>If you feel worried about a message, pause and ask someone you trust.</div>", unsafe_allow_html=True)
 
 
-# ── HOME ──
 if page_key == "home":
     st.markdown(f"""
     <div class="ss-hero">
@@ -547,7 +522,6 @@ if page_key == "home":
     """, unsafe_allow_html=True)
 
 
-# ── CHECK A MESSAGE ──
 elif page_key == "check":
     st.markdown(f"<h1>{t['check_title']}</h1>", unsafe_allow_html=True)
     st.markdown(f"<p style='font-size:clamp(14px,{fs}px,{fs+1}px);margin-bottom:18px;'>{t['check_subtitle']}</p>", unsafe_allow_html=True)
@@ -674,7 +648,6 @@ elif page_key == "check":
                 st.json(assessment_data)
 
 
-# ── SCAM AWARENESS ──
 elif page_key == "tips":
     st.markdown(f"<h1>{t['tips_title']}</h1>", unsafe_allow_html=True)
     st.markdown(f"<p style='font-size:clamp(14px,{fs}px,{fs+1}px);margin-bottom:22px;'>{t['tips_sub']}</p>", unsafe_allow_html=True)
@@ -698,7 +671,6 @@ elif page_key == "tips":
     render_audio_narrator(". ".join(f"{t}: {d}" for t, d, _, __ in scams), current_lang_code)
 
 
-# ── TRUSTED HELPER ──
 elif page_key == "helper":
     st.markdown(f"<h1>{t['helper_title']}</h1>", unsafe_allow_html=True)
     st.markdown(f"<p style='font-size:clamp(14px,{fs}px,{fs+1}px);margin-bottom:22px;'>{t['helper_sub']}</p>", unsafe_allow_html=True)
@@ -757,7 +729,6 @@ elif page_key == "helper":
     </div>""", unsafe_allow_html=True)
 
 
-# ── AI COMPANION ──
 elif page_key == "bot":
     st.markdown(f"""
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;flex-wrap:wrap;">
@@ -808,7 +779,6 @@ elif page_key == "bot":
             render_audio_narrator(ans, current_lang_code)
 
 
-# ── SETTINGS ──
 elif page_key == "settings":
     st.markdown(f"""
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;flex-wrap:wrap;">

@@ -36,6 +36,14 @@ class AnalyzeRequest(BaseModel):
         ),
         examples=["http://secure-bank-verify.xyz/login"],
     )
+    language: str | None = Field(
+        default="English",
+        description="Optional preferred language for output instructions and warnings.",
+    )
+    consent_given: bool = Field(
+        default=True,
+        description="User consent for message safety and URL analysis.",
+    )
 
     @field_validator("message")
     @classmethod
@@ -118,6 +126,7 @@ class AnalyzeResponse(BaseModel):
     recommended_actions: list[str] = Field(default_factory=list)
     module_status: list[ModuleStatusModel] = Field(default_factory=list)
     score: ScoreModel
+    risk_score: float = Field(default=0.0, description="Normalized risk score between 0.0 and 1.0.")
     config_version: str
 
 

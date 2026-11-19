@@ -53,8 +53,6 @@ class RiskEngine:
     def __init__(self, config: RiskConfig) -> None:
         self._config = config
 
-    # ------------------------------------------------------------------ public
-
     def assess(
         self,
         indicators: list[Indicator],
@@ -107,8 +105,6 @@ class RiskEngine:
             capped_sources=capped,
             degraded=degraded,
         )
-
-    # ----------------------------------------------------------------- helpers
 
     def _apply_overrides(
         self, context: OverrideContext, indicators: list[Indicator]
@@ -174,8 +170,6 @@ class RiskEngine:
 
         for indicator in indicators:
             if indicator.decisive:
-                # Decisive indicators set the level through an override rule and
-                # must not add points, otherwise the same evidence counts twice.
                 continue
 
             points = self._config.severity_points.get(indicator.severity, 0)

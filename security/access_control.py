@@ -11,7 +11,7 @@ Enforces:
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Tuple
 from security.auth_rules import decode_token
 from security.consent import ConsentPreferences
 

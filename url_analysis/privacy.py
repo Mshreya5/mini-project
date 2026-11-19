@@ -14,16 +14,11 @@ from __future__ import annotations
 import re
 from typing import Tuple
 
-MAX_MESSAGE_BYTES = 65536  # 64 KiB — consistent with Member 2's privacy module
+MAX_MESSAGE_BYTES = 65536
 
-# Patterns to strip obvious PII from message text before URL extraction.
-# We only need to remove PII; URLs must be preserved for analysis.
 _PII_PATTERNS = [
-    # Phone numbers
     re.compile(r"\b(?:\+?\d{1,3}[.\-\s]?)?\(?\d{3}\)?[.\-\s]?\d{3}[.\-\s]?\d{4}\b"),
-    # Credit card numbers (13–19 digits with optional separators)
     re.compile(r"\b(?:\d[ \-]?){13,19}\b"),
-    # Email addresses
     re.compile(r"\b[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}\b"),
 ]
 

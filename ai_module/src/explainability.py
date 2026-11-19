@@ -1,6 +1,4 @@
-from typing import List, Optional
-
-from ai_module.src.config import STANDARD_DISCLAIMER
+from typing import List
 
 
 def generate_explanation(

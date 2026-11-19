@@ -21,13 +21,11 @@ from typing import Any, Dict, List, Optional, Tuple
 import jwt
 from security.passwords import verify_password
 
-# Standard anti-enumeration messages
 GENERIC_LOGIN_ERROR = "Invalid email or password."
 GENERIC_REGISTRATION_ERROR = (
     "Unable to register account with the provided details. Please check your credentials or log in."
 )
 
-# In-memory revocation cache for invalidated tokens (token_str -> expiration_timestamp)
 _token_blacklist: Dict[str, float] = {}
 
 
@@ -83,7 +81,6 @@ class SlidingWindowRateLimiter:
         now = time.time()
         cutoff = now - window_seconds
 
-        # Clean timestamps older than the sliding window
         valid_timestamps = [t for t in self._records[key] if t > cutoff]
         self._records[key] = valid_timestamps
 

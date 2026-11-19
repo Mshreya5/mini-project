@@ -15,41 +15,33 @@ import re
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional, Tuple
 
-MAX_MESSAGE_PAYLOAD_BYTES = 65536  # 64 KiB limit
+MAX_MESSAGE_PAYLOAD_BYTES = 65536
 
-# High-performance regular expression patterns for sensitive data redaction
 REDACTION_PATTERNS = [
-    # Passwords in JSON / query params / key-value format (quoted or unquoted)
     (
         re.compile(r'(?i)(["\']?(?:password|pwd|pass|secret|csrf_token)["\']?\s*[:=]\s*["\']?)([^"\'\s&,;{}]+)(["\']?)'),
         r"\g<1>[REDACTED_SECRET]\g<3>",
     ),
-    # Authorization header / Bearer tokens / JWT format
     (
         re.compile(r'(?i)(Bearer\s+)[A-Za-z0-9\-_=]+\.[A-Za-z0-9\-_=]+\.?[A-Za-z0-9\-_.+/=]*'),
         r"\g<1>[REDACTED_TOKEN]",
     ),
-    # Credit Card Numbers (13 to 19 digits with optional hyphens or spaces)
     (
         re.compile(r'\b(?:\d[ -]*?){13,19}\b'),
         r"[REDACTED_CARD_NUMBER]",
     ),
-    # OTP / 2FA Verification Codes
     (
         re.compile(r'(?i)\b(?:otp|one[- ]time[- ]passcode|pin|verification[- ]code)\s*[:=]?\s*(\d{4,8})\b'),
         r"[REDACTED_OTP]",
     ),
-    # Email addresses (partially mask to preserve diagnostic ability: a***@domain.com)
     (
         re.compile(r'\b([A-Za-z0-9._%+-])[A-Za-z0-9._%+-]*(@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,})\b'),
         r"\g<1>***\g<2>",
     ),
-    # Phone numbers (international and local formats)
     (
         re.compile(r'\b(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b'),
         r"[REDACTED_PHONE]",
     ),
-    # Raw message content in JSON payload logging
     (
         re.compile(r'(?i)(["\']?(?:message|content|text|sms_body)["\']?\s*[:=]\s*["\'])([^"\']+)(["\'])'),
         r"\g<1>[MESSAGE_CONTENT_NOT_LOGGED_FOR_PRIVACY]\g<3>",
@@ -73,7 +65,6 @@ class SensitiveDataRedactingFilter(logging.Filter):
 
     def filter(self, record: logging.LogRecord) -> bool:
         try:
-            # Format msg with args first so pattern matching catches formatted credentials
             formatted = record.getMessage()
             record.msg = sanitize_text(formatted)
             record.args = ()

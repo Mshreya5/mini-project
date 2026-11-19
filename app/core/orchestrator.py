@@ -57,13 +57,13 @@ class RiskAggregator:
         self._url_client = url_client or UrlAnalyzerClient(settings)
         self._engine = RiskEngine(config)
 
-    # ------------------------------------------------------------------ public
-
     def analyze(self, request: AnalyzeRequest) -> AnalyzeResponse:
         target_url = self._resolve_url(request)
         has_link = target_url is not None
 
-        message_result, url_result = self._call_modules(request.message, target_url)
+        message_result, url_result = self._call_modules(
+            request.message, target_url, consent_given=request.consent_given
+        )
 
         message_analysis = message_result.data if message_result.ok else None
         url_analysis = url_result.data if url_result.ok else None
@@ -140,10 +140,9 @@ class RiskAggregator:
                 applied_overrides=assessment.overrides,
                 reasons=assessment.reasons,
             ),
+            risk_score=round(min(1.0, max(0.0, assessment.score / 100.0)), 4),
             config_version=self._config.version,
         )
-
-    # ---------------------------------------------------------------- internal
 
     def _resolve_url(self, request: AnalyzeRequest) -> str | None:
         if request.url:
@@ -154,12 +153,17 @@ class RiskAggregator:
         return normalise_url(detected) or detected
 
     def _call_modules(
-        self, message: str, target_url: str | None
+        self, message: str, target_url: str | None, consent_given: bool = True
     ) -> tuple[RemoteCallResult, RemoteCallResult]:
         if target_url is None:
             return (
                 self._scam_client.analyze(message),
                 RemoteCallResult(state=ModuleState.SKIPPED, detail="no link in message"),
+            )
+        if not consent_given:
+            return (
+                self._scam_client.analyze(message),
+                RemoteCallResult(state=ModuleState.SKIPPED, detail="consent not granted for URL analysis"),
             )
 
         with ThreadPoolExecutor(max_workers=2) as pool:

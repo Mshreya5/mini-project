@@ -1,6 +1,5 @@
 import json
 import logging
-from pathlib import Path
 from typing import Dict, Tuple
 
 import joblib
@@ -17,10 +16,8 @@ from ai_module.src.config import (
     EVALUATION_REPORT_PATH,
     LOGISTIC_REGRESSION_MODEL_PATH,
     METRICS_SUMMARY_PATH,
-    MODELS_DIR,
     NAIVE_BAYES_MODEL_PATH,
     RANDOM_STATE,
-    REPORTS_DIR,
     ROC_CURVE_PATH,
     TEST_SIZE,
     TFIDF_VECTORIZER_PATH,

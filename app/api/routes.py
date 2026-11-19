@@ -31,6 +31,12 @@ router = APIRouter()
         200: {"description": "Aggregated risk assessment."},
     },
 )
+@router.post(
+    "/assess",
+    response_model=AnalyzeResponse,
+    summary="Assess one message for scam risk (Frontend Alias)",
+    include_in_schema=False,
+)
 def analyze(payload: AnalyzeRequest, request: Request) -> AnalyzeResponse:
     """Run the message through every module and return the aggregated result."""
     return request.app.state.aggregator.analyze(payload)

@@ -8,7 +8,7 @@ and timestamped audit entry generation complying with GDPR / DPDP guidelines.
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 from pydantic import BaseModel, Field
 
 DEFAULT_POLICY_VERSION = "v1.0"
@@ -17,25 +17,18 @@ DEFAULT_POLICY_VERSION = "v1.0"
 class ConsentPreferences(BaseModel):
     """Granular consent choices. Optional consent items must default to False."""
 
-    # 1. Processing message during on-demand analysis (strictly necessary for service delivery)
     consent_message_analysis: bool = Field(
         default=True,
         description="Allow in-memory inspection of message text to calculate scam risk score.",
     )
-
-    # 2. Saving analysis history (Optional - Default False)
     consent_save_history: bool = Field(
         default=False,
         description="Optional: Save risk rating metadata in your account for future review.",
     )
-
-    # 3. Anonymous threat analytics (Optional - Default False)
     consent_analytics: bool = Field(
         default=False,
         description="Optional: Share aggregated, non-PII scam patterns to improve safety models.",
     )
-
-    # 4. Caregiver notification (Optional - Default False, disabled pending team approval)
     consent_caregiver_sharing: bool = Field(
         default=False,
         description="Optional (Future Feature): Notify a designated family contact on high-risk scams.",
@@ -48,7 +41,7 @@ class ConsentAuditEntry(BaseModel):
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     purpose: str
     consented: bool
-    action: str  # "granted" | "withdrawn"
+    action: str
     policy_version: str = DEFAULT_POLICY_VERSION
 
 
