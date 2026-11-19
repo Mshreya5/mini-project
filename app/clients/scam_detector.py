@@ -105,11 +105,13 @@ def parse_message_payload(payload: Mapping[str, Any]) -> MessageAnalysis | None:
     prediction = normalise_prediction(raw_prediction)
     confidence = as_confidence(first_present(payload, _CONFIDENCE_KEYS))
     signals = as_text_list(first_present(payload, _SIGNAL_KEYS))
+    explanation = payload.get("explanation") if isinstance(payload.get("explanation"), str) else None
 
     return MessageAnalysis(
         prediction=prediction,
         confidence=confidence,
         signals=signals,
+        explanation=explanation,
     )
 
 

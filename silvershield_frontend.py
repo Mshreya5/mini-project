@@ -610,6 +610,15 @@ elif page_key == "check":
 
             render_audio_narrator(f"{warning}. " + " ".join(actions), current_lang_code, button_label=t["read_aloud_btn"])
 
+            explanation = assessment_data.get("explanation")
+            if explanation:
+                st.markdown(f"""
+                <div class="ss-info-box" style="margin-top:14px;border-left:6px solid {accent};">
+                  <div style="font-weight:600;font-size:clamp(13px,{fs-1}px,{fs}px);line-height:1.6;">
+                    <b>AI Explanation:</b> {explanation}
+                  </div>
+                </div>""", unsafe_allow_html=True)
+
             st.markdown(f"<h3 style='margin-top:18px;margin-bottom:10px;'>{t['actions_title']}</h3>", unsafe_allow_html=True)
             for action in actions:
                 st.markdown(f'<div class="ss-action-item">{ICONS["check"]} <span>{action}</span></div>', unsafe_allow_html=True)
@@ -643,6 +652,8 @@ elif page_key == "check":
                 st.write("**Overall Risk Level:**", risk_level)
                 st.write("**Risk Score (0.0 to 1.0):**", round(risk_score, 4))
                 st.write("**ML Classification (Member 2):**", assessment_data.get("message_prediction"))
+                if explanation:
+                    st.write("**AI Model Explanation:**", explanation)
                 st.write("**URL Threat Level (Member 3):**", assessment_data.get("url_risk"))
                 st.write("**Module Status:**", assessment_data.get("module_status"))
                 st.json(assessment_data)

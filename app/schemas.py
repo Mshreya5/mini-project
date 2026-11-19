@@ -124,6 +124,9 @@ class AnalyzeResponse(BaseModel):
     )
     warning: str
     recommended_actions: list[str] = Field(default_factory=list)
+    explanation: str | None = Field(
+        default=None, description="Explainable AI reasoning from Member 2."
+    )
     module_status: list[ModuleStatusModel] = Field(default_factory=list)
     score: ScoreModel
     risk_score: float = Field(default=0.0, description="Normalized risk score between 0.0 and 1.0.")

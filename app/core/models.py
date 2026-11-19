@@ -60,6 +60,7 @@ class MessageAnalysis:
     prediction: str
     confidence: float | None = None
     signals: tuple[str, ...] = ()
+    explanation: str | None = None
 
     @property
     def is_scam(self) -> bool:

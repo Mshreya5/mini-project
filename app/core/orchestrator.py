@@ -120,6 +120,7 @@ class RiskAggregator:
             recommended_actions=build_actions(
                 self._config, assessment.level, assessment.indicators
             ),
+            explanation=message_analysis.explanation if message_analysis else None,
             module_status=module_status,
             score=ScoreModel(
                 total=assessment.score,
