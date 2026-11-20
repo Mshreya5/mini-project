@@ -8,9 +8,11 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
 import socket
 import sys
+import urllib.parse
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -293,7 +295,7 @@ if st.session_state.active_nav == "nav_dashboard":
         </div>
       </div>
     </div>
-    <p style="font-size:clamp(14px,{fs}px,{fs+1}px);margin-bottom:22px;">Ask any question about staying safe on your phone or internet.</p>
+    <p style="font-size:clamp(14px,{current_fs}px,{current_fs+1}px);margin-bottom:22px;">Ask any question about staying safe on your phone or internet.</p>
     """, unsafe_allow_html=True)
 
     narrator_col, cta_col = st.columns([1, 2], vertical_alignment="center")
