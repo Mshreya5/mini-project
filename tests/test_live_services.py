@@ -9,15 +9,27 @@ os.environ["no_proxy"] = "localhost,127.0.0.1,*"
 
 PYTHON = sys.executable
 
+
+def kill_proc(proc):
+    if sys.platform == "win32":
+        subprocess.run(f"taskkill /F /T /PID {proc.pid}", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    else:
+        proc.terminate()
+        try:
+            proc.wait(timeout=2)
+        except Exception:
+            proc.kill()
+
 def test_live_system():
     print("=================================================================")
     print("🚀 STARTING LIVE PRODUCTION SERVICES FOR VERIFICATION")
     print("=================================================================")
 
-    p2 = subprocess.Popen([PYTHON, "-m", "uvicorn", "ai_module.api.main:app", "--host", "127.0.0.1", "--port", "8001"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    p3 = subprocess.Popen([PYTHON, "-m", "uvicorn", "url_analysis.api:app", "--host", "127.0.0.1", "--port", "8002"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    p4 = subprocess.Popen([PYTHON, "-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", "8000"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    p1 = subprocess.Popen([PYTHON, "-m", "streamlit", "run", "silvershield_frontend.py", "--server.port", "8501", "--server.headless", "true", "--browser.gatherUsageStats", "false"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    sub_env = {**os.environ, "NO_PROXY": "*", "no_proxy": "*"}
+    p2 = subprocess.Popen([PYTHON, "-m", "uvicorn", "ai_module.api.main:app", "--host", "127.0.0.1", "--port", "8001"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, env=sub_env)
+    p3 = subprocess.Popen([PYTHON, "-m", "uvicorn", "url_analysis.api:app", "--host", "127.0.0.1", "--port", "8002"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, env=sub_env)
+    p4 = subprocess.Popen([PYTHON, "-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", "8000"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, env=sub_env)
+    p1 = subprocess.Popen([PYTHON, "-m", "streamlit", "run", "silvershield_frontend.py", "--server.port", "8501", "--server.headless", "true", "--browser.gatherUsageStats", "false"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, env=sub_env)
 
     processes = [p2, p3, p4, p1]
 
@@ -147,8 +159,7 @@ def test_live_system():
 
         print("\n--- TEST 8: ML Service Unavailable (Graceful Degradation) ---")
         print("Stopping Member 2 (ML API)...")
-        p2.terminate()
-        p2.wait()
+        kill_proc(p2)
         time.sleep(1.0)
 
         r_degraded_ml = requests.post(backend_url, json={"message": "A normal test message while ML is down"}, timeout=6.0)
@@ -162,8 +173,7 @@ def test_live_system():
 
         print("\n--- TEST 9: URL Service Unavailable (Graceful Degradation) ---")
         print("Stopping Member 3 (URL API)...")
-        p3.terminate()
-        p3.wait()
+        kill_proc(p3)
         time.sleep(1.0)
 
         r_degraded_url = requests.post(backend_url, json={"message": "Check link http://example.com/test while URL service is down"}, timeout=6.0)
@@ -187,14 +197,7 @@ def test_live_system():
     finally:
         print("\nCleaning up live test background processes...")
         for p in processes:
-            try:
-                p.terminate()
-                p.wait(timeout=2)
-            except Exception:
-                try:
-                    p.kill()
-                except Exception:
-                    pass
+            kill_proc(p)
         print("All processes terminated successfully.")
 
 if __name__ == "__main__":

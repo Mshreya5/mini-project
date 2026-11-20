@@ -34,6 +34,7 @@ class JsonApiClient:
         self.timeout_seconds = timeout_seconds
         self.max_retries = max_retries
         self._session = session or requests.Session()
+        self._session.trust_env = False
 
     def post(self, payload: dict[str, Any]) -> RemoteCallResult[dict[str, Any]]:
         started = time.perf_counter()
