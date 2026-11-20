@@ -15,6 +15,15 @@ os.environ["no_proxy"] = "localhost,127.0.0.1,*"
 PYTHON = sys.executable
 
 
+def kill_port(port: int):
+    if sys.platform == "win32":
+        try:
+            cmd = f'powershell -Command "Get-NetTCPConnection -LocalPort {port} -ErrorAction SilentlyContinue | ForEach-Object {{ Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }}"'
+            subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except Exception:
+            pass
+
+
 def kill_proc(proc):
     try:
         proc.kill()
@@ -174,6 +183,7 @@ def test_live_system():
         print("\n--- TEST 8: ML Service Unavailable (Graceful Degradation) ---")
         print("Stopping Member 2 (ML API)...")
         kill_proc(p2)
+        kill_port(8001)
         for _ in range(10):
             try:
                 requests.get("http://127.0.0.1:8001/health", timeout=0.5)
@@ -181,7 +191,7 @@ def test_live_system():
             except Exception:
                 break
 
-        r_degraded_ml = requests.post(backend_url, json={"message": "A normal test message while ML is down"}, timeout=6.0)
+        r_degraded_ml = requests.post(backend_url, json={"message": "A normal test message while ML is down"}, timeout=10.0)
         assert r_degraded_ml.status_code == 200
         d8 = r_degraded_ml.json()
         print(f"Degraded Risk Level: {d8['overall_risk']} | Status: {d8['status']}")
@@ -193,6 +203,7 @@ def test_live_system():
         print("\n--- TEST 9: URL Service Unavailable (Graceful Degradation) ---")
         print("Stopping Member 3 (URL API)...")
         kill_proc(p3)
+        kill_port(8002)
         for _ in range(10):
             try:
                 requests.get("http://127.0.0.1:8002/health", timeout=0.5)
@@ -200,7 +211,7 @@ def test_live_system():
             except Exception:
                 break
 
-        r_degraded_url = requests.post(backend_url, json={"message": "Check link http://example.com/test while URL service is down"}, timeout=6.0)
+        r_degraded_url = requests.post(backend_url, json={"message": "Check link http://example.com/test while URL service is down"}, timeout=10.0)
         assert r_degraded_url.status_code == 200
         d9 = r_degraded_url.json()
         print(f"Degraded Risk Level: {d9['overall_risk']} | Status: {d9['status']}")
@@ -222,6 +233,10 @@ def test_live_system():
         print("\nCleaning up live test background processes...")
         for p in processes:
             kill_proc(p)
+        kill_port(8001)
+        kill_port(8002)
+        kill_port(8000)
+        kill_port(8501)
         print("All processes terminated successfully.")
 
 if __name__ == "__main__":

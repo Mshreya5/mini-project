@@ -1,5 +1,5 @@
 """
-SilverShield AI - Elegant Purple, White & Lavender Design System
+SilverShield AI 
 Theme specifications:
 - Background: #F8F7FC
 - Primary Purple: #7653B5

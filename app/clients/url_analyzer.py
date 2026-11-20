@@ -98,9 +98,18 @@ def parse_url_payload(payload: Mapping[str, Any], url: str) -> UrlAnalysis | Non
         if isinstance(first, dict):
             raw_suspicious = first.get("suspicious", False)
             risk_score = int(first.get("risk_score", 0))
-            if risk_score >= 3:
+            raw_risk_level = str(first.get("risk_level", "")).upper()
+            indicators_text = " ".join(str(i).lower() for i in first.get("risk_indicators", []))
+
+            if (
+                raw_risk_level == "HIGH"
+                or risk_score >= 2
+                or "ip address" in indicators_text
+                or "brand impersonation" in indicators_text
+                or "deceptive keywords" in indicators_text
+            ):
                 raw_level = URL_MALICIOUS
-            elif raw_suspicious:
+            elif raw_risk_level == "MEDIUM" or raw_suspicious or risk_score >= 1:
                 raw_level = URL_SUSPICIOUS
             else:
                 raw_level = URL_SAFE
@@ -112,7 +121,7 @@ def parse_url_payload(payload: Mapping[str, Any], url: str) -> UrlAnalysis | Non
                     flags.append("ip_address")
                 elif "shortener" in ind_lower:
                     flags.append("shortened")
-                elif "brand impersonation" in ind_lower or "homoglyph" in ind_lower or "subdomain" in ind_lower:
+                elif "brand impersonation" in ind_lower or "homoglyph" in ind_lower or "subdomain" in ind_lower or "deceptive keywords" in ind_lower:
                     flags.append("lookalike")
                 elif "top-level domain" in ind_lower:
                     flags.append("suspicious_tld")
@@ -122,9 +131,11 @@ def parse_url_payload(payload: Mapping[str, Any], url: str) -> UrlAnalysis | Non
                     flags.append("redirect")
                 elif "at symbol" in ind_lower:
                     flags.append("lookalike")
+                elif "unencrypted" in ind_lower or "http" in ind_lower:
+                    flags.append("no_https")
 
             parsed_url = str(first.get("url", url))
-            if parsed_url.startswith("http://"):
+            if parsed_url.startswith("http://") and "no_https" not in flags:
                 flags.append("no_https")
 
             return UrlAnalysis(

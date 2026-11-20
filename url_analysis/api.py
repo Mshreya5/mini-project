@@ -49,12 +49,15 @@ def analyze_url_endpoint(payload: AnalyzeRequest) -> AnalyzeResponse:
     if not permitted:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=reason)
 
-    valid, error = validate_message(payload.message)
+    target_text = (payload.message or payload.url or "").strip()
+    valid, error = validate_message(target_text)
     if not valid:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=error)
 
-    sanitized = sanitize_message_for_extraction(payload.message)
+    sanitized = sanitize_message_for_extraction(target_text)
     urls = extract_urls(sanitized)
+    if not urls and payload.url and payload.url.strip():
+        urls = [payload.url.strip()]
 
     if not urls:
         return AnalyzeResponse(
@@ -74,6 +77,7 @@ def analyze_url_endpoint(payload: AnalyzeRequest) -> AnalyzeResponse:
                 risk_score=ar.risk_score,
                 risk_indicators=ar.risk_indicators,
                 explanation=ar.explanation,
+                risk_level=ar.risk_level,
             )
         )
 

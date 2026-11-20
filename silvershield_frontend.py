@@ -151,7 +151,8 @@ def run_integrated_analysis(message_text: str, url_override: Optional[str] = Non
                 "suspicious": res.suspicious,
                 "risk_score": res.risk_score,
                 "risk_indicators": res.risk_indicators,
-                "explanation": res.explanation
+                "explanation": res.explanation,
+                "risk_level": res.risk_level,
             }
             payload = {"results": [u_dict]}
             analysis = parse_url_payload(payload, target_url)
@@ -171,34 +172,24 @@ def run_integrated_analysis(message_text: str, url_override: Optional[str] = Non
         language=lang,
         consent_given=True
     )
-    result = aggregator.aggregate(req)
+    result = aggregator.analyze(req)
 
-    clean_indicators = []
-    if result.scam_analysis and result.scam_analysis.indicators:
-        clean_indicators.extend(result.scam_analysis.indicators)
-    if result.url_analysis and result.url_analysis.indicators:
-        clean_indicators.extend(result.url_analysis.indicators)
-
-    raw_conf = result.scam_analysis.confidence if result.scam_analysis else None
-    if raw_conf is not None and raw_conf > 1.0:
-        raw_conf = raw_conf / 100.0
+    clean_indicators = list(result.risk_indicators) if result.risk_indicators else []
 
     return {
-        "overall_risk_score": result.score,
-        "overall_risk_level": result.level.value,
-        "is_scam": result.scam_analysis.is_scam if result.scam_analysis else False,
-        "message_prediction": result.scam_analysis.prediction if result.scam_analysis else "UNKNOWN",
-        "message_confidence": raw_conf,
-        "url_risk": result.url_analysis.risk_level if result.url_analysis else "NOT_APPLICABLE",
-        "url_score": result.url_analysis.raw_score if result.url_analysis else 0,
-        "risk_score": result.score / 100.0,
-        "warning": result.action_advice.warning_message if result.action_advice else "Stay cautious.",
+        "overall_risk_score": int(result.risk_score * 100),
+        "overall_risk_level": result.overall_risk,
+        "overall_risk": result.overall_risk,
+        "is_scam": result.message_prediction == "SCAM",
+        "message_prediction": result.message_prediction,
+        "message_confidence": result.message_confidence,
+        "url_risk": result.url_risk,
+        "analysed_url": result.analysed_url,
+        "risk_score": result.risk_score,
+        "warning": result.warning,
         "explanation": result.explanation or "Analysis completed by SilverShield AI safety engine.",
         "risk_indicators": clean_indicators,
-        "recommended_actions": result.action_advice.recommended_actions if result.action_advice else [
-            "Do not click unknown links or share credentials.",
-            "Verify suspicious messages with a trusted family member."
-        ],
+        "recommended_actions": result.recommended_actions,
         "source": "local_engine"
     }
 
@@ -207,10 +198,14 @@ def run_standalone_url_analysis(target_url: str) -> Dict[str, Any]:
     clean_url = target_url.strip()
     try:
         with socket.create_connection(("127.0.0.1", 8002), timeout=0.08):
-            resp = requests.post(URL_SERVICE_URL, json={"url": clean_url}, timeout=3.0)
+            resp = requests.post(URL_SERVICE_URL, json={"message": clean_url, "url": clean_url, "consent_given": True}, timeout=3.0)
             if resp.status_code == 200:
                 data = resp.json()
                 data["source"] = "url_api"
+                if "results" in data and isinstance(data["results"], list) and len(data["results"]) > 0:
+                    first = data["results"][0]
+                    first["source"] = "url_api"
+                    return first
                 return data
     except Exception:
         pass
@@ -224,6 +219,7 @@ def run_standalone_url_analysis(target_url: str) -> Dict[str, Any]:
         "risk_score": ar.risk_score,
         "risk_indicators": ar.risk_indicators,
         "explanation": ar.explanation,
+        "risk_level": ar.risk_level,
         "source": "local_analyzer"
     }
 
@@ -466,17 +462,29 @@ elif st.session_state.active_nav == "nav_message_checker":
         ("Electricity Cutoff (HIGH)", "HIGH", "Dear consumer, your electricity connection will be disconnected tonight at 9:30 PM because previous bill was unpaid. Call power officer immediately at 9876543210."),
     ]
 
+    def on_select_message_sample(sample_text: str):
+        st.session_state["main_msg_textarea"] = sample_text
+        st.session_state["message_input"] = sample_text
+        st.session_state["last_message_result"] = None
+
+    def on_clear_message():
+        st.session_state["main_msg_textarea"] = ""
+        st.session_state["message_input"] = ""
+        st.session_state["last_message_result"] = None
+
     r1_col1, r1_col2, r1_col3 = st.columns(3)
     r2_col1, r2_col2, r2_col3 = st.columns(3)
     cols = [r1_col1, r1_col2, r1_col3, r2_col1, r2_col2, r2_col3]
 
     for i, (s_label, s_cat, s_text) in enumerate(samples):
         with cols[i]:
-            if st.button(s_label, key=f"smp_{i}", use_container_width=True):
-                st.session_state["main_msg_textarea"] = s_text
-                st.session_state.message_input = s_text
-                st.session_state.last_message_result = None
-                st.rerun()
+            st.button(
+                s_label,
+                key=f"smp_{i}",
+                use_container_width=True,
+                on_click=on_select_message_sample,
+                args=(s_text,)
+            )
 
     if "main_msg_textarea" not in st.session_state:
         st.session_state["main_msg_textarea"] = st.session_state.get("message_input", "")
@@ -493,13 +501,12 @@ elif st.session_state.active_nav == "nav_message_checker":
     with btn_c1:
         analyze_clicked = st.button(t("msg_btn_analyze", lang), type="primary", use_container_width=True)
     with btn_c2:
-        clear_clicked = st.button(t("msg_btn_clear", lang), use_container_width=True)
-
-    if clear_clicked:
-        st.session_state["main_msg_textarea"] = ""
-        st.session_state.message_input = ""
-        st.session_state.last_message_result = None
-        st.rerun()
+        st.button(
+            t("msg_btn_clear", lang),
+            key="msg_clear_btn",
+            use_container_width=True,
+            on_click=on_clear_message
+        )
 
     if analyze_clicked:
         active_msg = user_msg.strip()
@@ -609,22 +616,45 @@ elif st.session_state.active_nav == "nav_url_checker":
     <p style="color:#777185; font-size:13.5px; margin-bottom:14px;">{t('url_subtitle', lang)}</p>
     """, unsafe_allow_html=True)
 
+    def on_select_url_sample(sample_url: str):
+        st.session_state["main_url_input"] = sample_url
+        st.session_state["url_input"] = sample_url
+        st.session_state["last_url_result"] = None
+
+    def on_clear_url():
+        st.session_state["main_url_input"] = ""
+        st.session_state["url_input"] = ""
+        st.session_state["last_url_result"] = None
+
     st.markdown(f"<span style='font-size:12px; font-weight:700; color:#777185;'>{t('url_sample_label', lang)}</span>", unsafe_allow_html=True)
-    u_cols = st.columns(3)
     u_samples = [
-        ("Fake Bank Site", "http://sbi-kyc-verification.top/login.php"),
-        ("Shortened Link", "http://bit.ly/claim-lottery-gift"),
-        ("Official Portal", "https://onlinesbi.sbi"),
+        ("Official Portal (LOW)", "https://onlinesbi.sbi"),
+        ("Safe Article (LOW)", "https://en.wikipedia.org/wiki/Digital_safety"),
+        ("Shortened Link (MED)", "https://bit.ly/48xK9Z"),
+        ("Suspicious TLD (MED)", "https://unverified-portal.xyz/info"),
+        ("Fake Bank Site (HIGH)", "http://sbi-kyc-verification.top/login.php"),
+        ("IP Phishing Link (HIGH)", "http://192.168.1.1/secure-login"),
     ]
+    ur1_col1, ur1_col2, ur1_col3 = st.columns(3)
+    ur2_col1, ur2_col2, ur2_col3 = st.columns(3)
+    ucols = [ur1_col1, ur1_col2, ur1_col3, ur2_col1, ur2_col2, ur2_col3]
+
     for i, (u_lbl, u_val) in enumerate(u_samples):
-        with u_cols[i]:
-            if st.button(u_lbl, key=f"usmp_{i}", use_container_width=True):
-                st.session_state.url_input = u_val
-                st.rerun()
+        with ucols[i]:
+            st.button(
+                u_lbl,
+                key=f"usmp_{i}",
+                use_container_width=True,
+                on_click=on_select_url_sample,
+                args=(u_val,)
+            )
+
+    if "main_url_input" not in st.session_state:
+        st.session_state["main_url_input"] = st.session_state.get("url_input", "")
 
     user_url = st.text_input(
         t("url_input_label", lang),
-        value=st.session_state.url_input,
+        value=st.session_state["main_url_input"],
         placeholder="https://example.com/verify-account",
         key="main_url_input"
     )
@@ -633,12 +663,12 @@ elif st.session_state.active_nav == "nav_url_checker":
     with u_btn_c1:
         u_analyze_clicked = st.button(t("url_btn_analyze", lang), type="primary", use_container_width=True)
     with u_btn_c2:
-        u_clear_clicked = st.button(t("msg_btn_clear", lang), key="u_clear", use_container_width=True)
-
-    if u_clear_clicked:
-        st.session_state.url_input = ""
-        st.session_state.last_url_result = None
-        st.rerun()
+        st.button(
+            t("msg_btn_clear", lang),
+            key="u_clear_btn",
+            use_container_width=True,
+            on_click=on_clear_url
+        )
 
     if u_analyze_clicked:
         if not user_url.strip():
@@ -648,7 +678,22 @@ elif st.session_state.active_nav == "nav_url_checker":
                 url_res = run_standalone_url_analysis(user_url.strip())
                 st.session_state.last_url_result = url_res
                 
-                risk_lvl = "HIGH" if url_res.get("risk_score", 0) >= 3 else ("MEDIUM" if url_res.get("suspicious") else "LOW")
+                raw_rl = str(url_res.get("risk_level", "")).upper()
+                u_score = url_res.get("risk_score", 0)
+                u_inds = url_res.get("risk_indicators", [])
+                if (
+                    raw_rl == "HIGH"
+                    or u_score >= 2
+                    or any("ip address" in str(ind).lower() for ind in u_inds)
+                    or any("brand impersonation" in str(ind).lower() for ind in u_inds)
+                    or any("deceptive" in str(ind).lower() for ind in u_inds)
+                ):
+                    risk_lvl = "HIGH"
+                elif raw_rl == "MEDIUM" or url_res.get("suspicious") or u_score >= 1:
+                    risk_lvl = "MEDIUM"
+                else:
+                    risk_lvl = "LOW"
+
                 log_analysis_history(
                     input_type="URL",
                     content=user_url.strip(),
@@ -661,13 +706,31 @@ elif st.session_state.active_nav == "nav_url_checker":
         st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
         st.markdown(f"<h2 style='font-size:18px; color:#49316F;'>{t('url_res_heading', lang)}</h2>", unsafe_allow_html=True)
 
+        raw_risk_level = str(u_res.get("risk_level", "")).upper()
         is_suspicious = u_res.get("suspicious", False)
         risk_score = u_res.get("risk_score", 0)
         analyzed_url = u_res.get("url", "")
         url_indicators = u_res.get("risk_indicators", [])
         explanation = u_res.get("explanation", "")
 
-        if risk_score >= 3:
+        is_high = (
+            raw_risk_level == "HIGH"
+            or risk_score >= 2
+            or any("ip address" in str(ind).lower() for ind in url_indicators)
+            or any("brand impersonation" in str(ind).lower() for ind in url_indicators)
+            or any("deceptive" in str(ind).lower() for ind in url_indicators)
+            or any("@ symbol" in str(ind).lower() for ind in url_indicators)
+        )
+        is_med = (
+            raw_risk_level == "MEDIUM"
+            or is_suspicious
+            or risk_score >= 1
+            or any("shortener" in str(ind).lower() for ind in url_indicators)
+            or any("unencrypted" in str(ind).lower() for ind in url_indicators)
+            or any("top-level domain" in str(ind).lower() for ind in url_indicators)
+        )
+
+        if is_high:
             url_level = "HIGH"
             level_banner_class = "alert-high"
             level_text = translate_url_risk("MALICIOUS", lang)
@@ -675,7 +738,7 @@ elif st.session_state.active_nav == "nav_url_checker":
             url_badge_style = "background:#DC2626; color:#FFFFFF; border: 1.5px solid #B91C1C;"
             title_color = "#991B1B"
             target_color = "#7F1D1D"
-        elif is_suspicious or risk_score >= 1:
+        elif is_med:
             url_level = "MEDIUM"
             level_banner_class = "alert-med"
             level_text = translate_url_risk("SUSPICIOUS", lang)

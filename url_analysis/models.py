@@ -5,25 +5,33 @@ Member 3: Privacy, Cybersecurity and URL Analysis.
 
 from __future__ import annotations
 
-from typing import List
-from pydantic import BaseModel, Field, field_validator
+from typing import List, Optional
+from pydantic import BaseModel, Field, model_validator
 
 
 class AnalyzeRequest(BaseModel):
-    """Incoming request: raw message text submitted by the user."""
+    """Incoming request: raw message text or direct URL submitted by the user."""
 
-    message: str = Field(..., min_length=1, max_length=65536, description="Raw message text to analyze for URLs.")
+    message: Optional[str] = Field(
+        default=None,
+        description="Raw message text to analyze for URLs.",
+    )
+    url: Optional[str] = Field(
+        default=None,
+        description="Optional direct URL to analyze.",
+    )
     consent_given: bool = Field(
         default=True,
         description="User has consented to message analysis for safety checking.",
     )
 
-    @field_validator("message")
-    @classmethod
-    def message_must_not_be_blank(cls, v: str) -> str:
-        if not v.strip():
-            raise ValueError("Message must not be blank.")
-        return v
+    @model_validator(mode="after")
+    def check_at_least_one_text(self) -> "AnalyzeRequest":
+        msg = (self.message or "").strip()
+        u = (self.url or "").strip()
+        if not msg and not u:
+            raise ValueError("Message or URL must not be blank.")
+        return self
 
 
 class URLAnalysisResult(BaseModel):
@@ -35,6 +43,7 @@ class URLAnalysisResult(BaseModel):
     risk_score: int = Field(..., ge=0, description="Count of triggered risk indicators.")
     risk_indicators: List[str] = Field(default_factory=list, description="List of detected suspicious characteristics.")
     explanation: str = Field(..., description="Plain-language summary of findings.")
+    risk_level: str = Field(default="LOW", description="Risk tier: LOW, MEDIUM, or HIGH.")
 
 
 class AnalyzeResponse(BaseModel):
