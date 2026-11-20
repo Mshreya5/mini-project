@@ -9,8 +9,6 @@ from url_analysis.analyzer import analyze_url
 
 
 def test_clean_url_not_suspicious():
-    # bbc.co.uk is a legitimate multi-label ccTLD — one subdomain indicator may fire
-    # but it must NOT be marked suspicious (requires >= 2 indicators)
     result = analyze_url("https://www.bbc.co.uk/news")
     assert result.suspicious is False
 
@@ -59,14 +57,12 @@ def test_at_symbol_in_url_flagged():
 def test_single_indicator_not_suspicious():
     """One indicator alone must NOT set suspicious=True."""
     result = analyze_url("https://bit.ly/abc")
-    # shortener is 1 indicator — not enough
     assert result.risk_score >= 1
     assert result.suspicious is False
 
 
 def test_two_indicators_marks_suspicious():
     """Two or more indicators must set suspicious=True."""
-    # IP + suspicious path = 2 indicators
     result = analyze_url("http://192.168.1.1/login/verify")
     assert result.suspicious is True
     assert result.risk_score >= 2

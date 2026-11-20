@@ -51,10 +51,8 @@ def test_resource_ownership_enforcement():
     owner_id = "user-alice-100"
     other_user_id = "user-mallory-666"
 
-    # Legitimate owner
     assert enforce_resource_ownership(owner_id, owner_id) is True
 
-    # Cross-user unauthorized access attempt
     with pytest.raises(AccessDeniedError, match="Unauthorized access"):
         enforce_resource_ownership(authenticated_user_id=other_user_id, resource_owner_id=owner_id)
 
@@ -75,7 +73,6 @@ def test_user_profile_filtering():
     assert filtered["email"] == "senior@example.com"
     assert filtered["full_name"] == "Senior User"
     assert filtered["is_active"] is True
-    # CRITICAL: Verify secret fields are excluded
     assert "password_hash" not in filtered
     assert "internal_salt" not in filtered
 
@@ -89,21 +86,17 @@ def test_action_consent_verification():
         consent_caregiver_sharing=False,
     )
 
-    # Message analysis permitted
     allowed, _ = verify_action_consent(prefs, "message_analysis")
     assert allowed is True
 
-    # Save history blocked without consent
     allowed, reason = verify_action_consent(prefs, "save_history")
     assert allowed is False
     assert "not granted" in reason
 
-    # Caregiver sharing blocked without consent
     allowed, reason = verify_action_consent(prefs, "caregiver_sharing")
     assert allowed is False
     assert "not granted" in reason
 
-    # Message analysis blocked if revoked
     revoked_prefs = ConsentPreferences(consent_message_analysis=False)
     allowed, reason = verify_action_consent(revoked_prefs, "message_analysis")
     assert allowed is False

@@ -81,7 +81,7 @@ class SlidingWindowRateLimiter:
         now = time.time()
         cutoff = now - window_seconds
 
-        valid_timestamps = [t for t in self._records[key] if t > cutoff]
+        valid_timestamps = [t for t in self._records.get(key, []) if t > cutoff]
         self._records[key] = valid_timestamps
 
         if len(valid_timestamps) >= max_requests:

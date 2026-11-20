@@ -109,7 +109,7 @@ class RiskAggregator:
         return AnalyzeResponse(
             analysis_id=uuid.uuid4().hex,
             generated_at=datetime.now(timezone.utc),
-            overall_risk=assessment.level,  # type: ignore[arg-type]
+            overall_risk=assessment.level,
             status="DEGRADED" if degraded else "OK",
             message_prediction=prediction,
             message_confidence=confidence,

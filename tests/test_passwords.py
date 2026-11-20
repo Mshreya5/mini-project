@@ -14,7 +14,6 @@ def test_hash_password_uses_argon2id():
     password = "SeniorSafetySecret2026!"
     hashed = hash_password(password)
 
-    # Argon2id format check: $argon2id$v=19$m=65536,t=2,p=1$...
     assert hashed.startswith("$argon2id$")
     assert "m=65536" in hashed
     assert "t=2" in hashed

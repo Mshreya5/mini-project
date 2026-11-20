@@ -1,7 +1,11 @@
+import os
 import subprocess
 import sys
 import time
 import requests
+
+os.environ["NO_PROXY"] = "localhost,127.0.0.1,*"
+os.environ["no_proxy"] = "localhost,127.0.0.1,*"
 
 PYTHON = sys.executable
 
@@ -10,19 +14,14 @@ def test_live_system():
     print("🚀 STARTING LIVE PRODUCTION SERVICES FOR VERIFICATION")
     print("=================================================================")
 
-    # 1. Start Member 2 (ML Scam Prediction API) on 8001
     p2 = subprocess.Popen([PYTHON, "-m", "uvicorn", "ai_module.api.main:app", "--host", "127.0.0.1", "--port", "8001"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    # 2. Start Member 3 (URL Analysis API) on 8002
     p3 = subprocess.Popen([PYTHON, "-m", "uvicorn", "url_analysis.api:app", "--host", "127.0.0.1", "--port", "8002"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    # 3. Start Member 4 (Central Risk Aggregator) on 8000
     p4 = subprocess.Popen([PYTHON, "-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", "8000"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    # 4. Start Member 1 (Streamlit Frontend) on 8501
     p1 = subprocess.Popen([PYTHON, "-m", "streamlit", "run", "silvershield_frontend.py", "--server.port", "8501", "--server.headless", "true", "--browser.gatherUsageStats", "false"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     processes = [p2, p3, p4, p1]
 
     try:
-        # Wait for all services to be healthy
         print("Waiting for all 4 services to become healthy...")
         healthy = False
         for attempt in range(25):
@@ -69,7 +68,6 @@ def test_live_system():
 
         backend_url = "http://127.0.0.1:8000/api/v1/assess"
 
-        # TEST SCENARIO 1: Legitimate Message
         print("\n--- TEST 1: Legitimate Message ---")
         msg1 = "Hi Mom, I am on my way home from college. See you for dinner at 8 PM!"
         r = requests.post(backend_url, json={"message": msg1}, timeout=5.0)
@@ -82,7 +80,6 @@ def test_live_system():
         assert d1["status"] == "OK"
         print("Result: PASS")
 
-        # TEST SCENARIO 2: Scam Message
         print("\n--- TEST 2: Scam Message ---")
         msg2 = "CONGRATULATIONS! You have been selected as the grand winner of $500,000 cash prize! Claim your prize now."
         r = requests.post(backend_url, json={"message": msg2}, timeout=5.0)
@@ -95,7 +92,6 @@ def test_live_system():
         assert len(d2["risk_indicators"]) > 0
         print("Result: PASS")
 
-        # TEST SCENARIO 3: Suspicious URL (IP address / unencrypted)
         print("\n--- TEST 3: Suspicious URL ---")
         msg3 = "Urgent: Your account is locked. Log in immediately to verify at http://192.168.1.1/secure-login"
         r = requests.post(backend_url, json={"message": msg3}, timeout=5.0)
@@ -107,7 +103,6 @@ def test_live_system():
         assert d3["url_risk"] in ("SUSPICIOUS", "MALICIOUS")
         print("Result: PASS")
 
-        # TEST SCENARIO 4: Safe URL
         print("\n--- TEST 4: Safe URL with Normal Message ---")
         msg4 = "Here is the article on elderly gardening tips you asked for: https://en.wikipedia.org/wiki/Gardening"
         r = requests.post(backend_url, json={"message": msg4}, timeout=5.0)
@@ -118,7 +113,6 @@ def test_live_system():
         assert d4["url_risk"] == "SAFE"
         print("Result: PASS")
 
-        # TEST SCENARIO 5: Message with OTP Request
         print("\n--- TEST 5: Message Containing OTP Request ---")
         msg5 = "Your bank verification OTP is 839201. Please reply with this OTP to our customer service agent to prevent account block."
         r = requests.post(backend_url, json={"message": msg5}, timeout=5.0)
@@ -131,7 +125,6 @@ def test_live_system():
         assert any("otp" in str(ind).lower() for ind in d5["risk_indicators"])
         print("Result: PASS")
 
-        # TEST SCENARIO 6: Urgent Payment Message
         print("\n--- TEST 6: Urgent Payment Threatening Account Suspension ---")
         msg6 = "FINAL NOTICE: Your power will be disconnected in 1 hour due to unpaid bill. Pay immediately by wire transfer to avoid penalty."
         r = requests.post(backend_url, json={"message": msg6}, timeout=5.0)
@@ -142,7 +135,6 @@ def test_live_system():
         assert len(d6["recommended_actions"]) > 0
         print("Result: PASS")
 
-        # TEST SCENARIO 7: Empty or Invalid Input
         print("\n--- TEST 7: Empty or Invalid Input ---")
         r_empty = requests.post(backend_url, json={"message": "   "}, timeout=5.0)
         print(f"Empty message response code: {r_empty.status_code}")
@@ -153,7 +145,6 @@ def test_live_system():
         assert r_bad_url.status_code == 422, f"Expected 422 for bad URL, got {r_bad_url.status_code}"
         print("Result: PASS")
 
-        # TEST SCENARIO 8: ML Service Unavailable (Degraded Mode)
         print("\n--- TEST 8: ML Service Unavailable (Graceful Degradation) ---")
         print("Stopping Member 2 (ML API)...")
         p2.terminate()
@@ -169,7 +160,6 @@ def test_live_system():
         assert d8["overall_risk"] != "LOW", "Degraded mode must enforce safety floor and NEVER report LOW risk"
         print("Result: PASS")
 
-        # TEST SCENARIO 9: URL Analysis Service Unavailable (Graceful Degradation)
         print("\n--- TEST 9: URL Service Unavailable (Graceful Degradation) ---")
         print("Stopping Member 3 (URL API)...")
         p3.terminate()
@@ -185,7 +175,6 @@ def test_live_system():
         assert d9["overall_risk"] != "LOW", "Degraded mode must enforce safety floor and NEVER report LOW risk"
         print("Result: PASS")
 
-        # TEST PRIVACY: Privacy endpoint and PII redaction
         print("\n--- TEST 10: Privacy and Redaction Checks ---")
         r_priv = requests.get("http://127.0.0.1:8000/api/v1/risk-config", timeout=5.0)
         assert r_priv.status_code == 200

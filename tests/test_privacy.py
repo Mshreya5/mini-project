@@ -82,12 +82,10 @@ def test_redacting_logger_filter():
 
 def test_payload_size_validation():
     """Verify payload size constraint enforcement."""
-    # Within 64 KiB
     valid, msg = validate_payload_size(1024)
     assert valid is True
     assert msg == ""
 
-    # Exceeding 64 KiB
     invalid, msg = validate_payload_size(MAX_MESSAGE_PAYLOAD_BYTES + 500)
     assert invalid is False
     assert "exceeds limit" in msg
@@ -109,7 +107,6 @@ def test_history_record_contains_zero_raw_message_text():
     assert record["risk_score"] == 0.92
     assert "created_at" in record
 
-    # CRITICAL: Confirm raw text does NOT exist anywhere in the record
     assert "content" not in record
     assert "text" not in record
     assert sample_text not in str(record)

@@ -16,7 +16,7 @@ ROOT = Path(__file__).parent
 
 
 def run_service(cmd, name):
-    print(f"🚀 Starting {name}...")
+    print(f"Starting {name}...")
     proc = subprocess.Popen(
         cmd,
         cwd=str(ROOT),
@@ -60,16 +60,16 @@ def main():
             p1 = run_service(f'"{python_bin}" -m streamlit run silvershield_frontend.py --server.port 8501 --server.headless true --browser.gatherUsageStats false', "Member 1 Streamlit Frontend (Port 8501)")
             processes.extend([p2, p3, p4, p1])
 
-            print("\n✅ All services running!")
-            print("👉 Open your browser at: http://localhost:8501")
-            print("👉 Backend API Swagger docs: http://localhost:8000/docs")
+            print("\n All services running!")
+            print(" Open your browser at: http://localhost:8501")
+            print(" Backend API Swagger docs: http://localhost:8000/docs")
             print("Press Ctrl+C to stop all services.\n")
 
         for p in processes:
             p.wait()
 
     except KeyboardInterrupt:
-        print("\n🛑 Shutting down all services...")
+        print("\n Shutting down all services...")
         for p in processes:
             p.terminate()
         print("Done.")

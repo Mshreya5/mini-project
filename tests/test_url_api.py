@@ -11,9 +11,6 @@ from url_analysis.api import app
 client = TestClient(app, raise_server_exceptions=False)
 
 
-# ---------------------------------------------------------------------------
-# /analyze-url
-# ---------------------------------------------------------------------------
 
 def test_analyze_clean_message_no_urls():
     resp = client.post("/analyze-url", json={"message": "Hello, how are you?", "consent_given": True})
@@ -108,9 +105,6 @@ def test_multiple_urls_all_analysed():
     assert data["url_count"] == 2
 
 
-# ---------------------------------------------------------------------------
-# /privacy-info
-# ---------------------------------------------------------------------------
 
 def test_privacy_info_returns_all_fields():
     resp = client.get("/privacy-info")
@@ -124,9 +118,6 @@ def test_privacy_info_returns_all_fields():
     assert len(data["how_data_is_protected"]) >= 3
 
 
-# ---------------------------------------------------------------------------
-# /health
-# ---------------------------------------------------------------------------
 
 def test_health_check():
     resp = client.get("/health")

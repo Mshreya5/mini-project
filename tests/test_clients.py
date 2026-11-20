@@ -50,7 +50,6 @@ def client_settings() -> Settings:
     )
 
 
-# --------------------------------------------------------------------- helpers
 
 
 def test_first_present_searches_wrapped_payloads() -> None:
@@ -76,7 +75,6 @@ def test_as_text_list_handles_strings_objects_and_case() -> None:
     assert as_text_list(None) == ()
 
 
-# --------------------------------------------------------------- scam adapter
 
 
 def test_scam_payload_with_alias_fields_and_percentage_confidence() -> None:
@@ -108,7 +106,7 @@ def test_scam_client_maps_timeout(client_settings) -> None:
 
     assert result.state is ModuleState.TIMEOUT
     assert result.data is None
-    assert session.calls == 2  # one retry
+    assert session.calls == 2
 
 
 def test_scam_client_maps_server_error_after_retries(client_settings) -> None:
@@ -152,7 +150,6 @@ def test_scam_client_unreachable_host(client_settings) -> None:
     assert client.analyze("hi").state is ModuleState.UNAVAILABLE
 
 
-# ---------------------------------------------------------------- url adapter
 
 
 def test_url_payload_flags_and_verdict() -> None:
@@ -197,7 +194,6 @@ def test_url_client_maps_http_error(client_settings) -> None:
     assert client.analyze("http://example.com").state is ModuleState.HTTP_ERROR
 
 
-# -------------------------------------------------------------------- generic
 
 
 def test_json_client_returns_elapsed_time(client_settings) -> None:

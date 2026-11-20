@@ -51,11 +51,9 @@ from security.privacy import (
 )
 
 __all__ = [
-    # Passwords
     "hash_password",
     "verify_password",
     "needs_rehash",
-    # Auth Rules
     "validate_password_strength",
     "resist_timing_enumeration",
     "SlidingWindowRateLimiter",
@@ -68,7 +66,6 @@ __all__ = [
     "verify_csrf_token",
     "GENERIC_LOGIN_ERROR",
     "GENERIC_REGISTRATION_ERROR",
-    # Consent
     "ConsentPreferences",
     "ConsentRecord",
     "ConsentAuditEntry",
@@ -78,14 +75,12 @@ __all__ = [
     "can_process_message",
     "can_save_history",
     "can_share_caregiver",
-    # Privacy
     "sanitize_text",
     "SensitiveDataRedactingFilter",
     "setup_secure_logging",
     "validate_payload_size",
     "prepare_history_record",
     "MAX_MESSAGE_PAYLOAD_BYTES",
-    # Access Control
     "AccessDeniedError",
     "derive_identity_from_token",
     "enforce_resource_ownership",

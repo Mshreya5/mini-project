@@ -44,7 +44,7 @@ async def generic_exception_handler(request: Request, exc: Exception) -> JSONRes
     summary="Extract and analyse URLs from a message",
     status_code=status.HTTP_200_OK,
 )
-async def analyze_url_endpoint(payload: AnalyzeRequest) -> AnalyzeResponse:
+def analyze_url_endpoint(payload: AnalyzeRequest) -> AnalyzeResponse:
     permitted, reason = check_consent(payload.consent_given)
     if not permitted:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=reason)
@@ -92,11 +92,11 @@ async def analyze_url_endpoint(payload: AnalyzeRequest) -> AnalyzeResponse:
     summary="Privacy disclosure for this module",
     status_code=status.HTTP_200_OK,
 )
-async def privacy_info_endpoint() -> PrivacyInfoResponse:
+def privacy_info_endpoint() -> PrivacyInfoResponse:
     info = get_privacy_info()
     return PrivacyInfoResponse(**info)
 
 
 @app.get("/health", include_in_schema=False)
-async def health() -> dict:
+def health() -> dict:
     return {"status": "ok"}

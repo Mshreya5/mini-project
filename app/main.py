@@ -12,6 +12,7 @@ from fastapi.responses import JSONResponse
 
 from app import __version__
 from app.api.routes import router
+from app.api.auth import auth_router, consent_router, history_router
 from app.core.orchestrator import RiskAggregator
 from app.settings import RiskConfig, Settings, get_risk_config
 
@@ -57,6 +58,9 @@ def create_app(
     )
 
     app.include_router(router, prefix="/api/v1")
+    app.include_router(auth_router, prefix="/api/v1")
+    app.include_router(consent_router, prefix="/api/v1")
+    app.include_router(history_router, prefix="/api/v1")
 
     @app.exception_handler(RequestValidationError)
     async def _validation_error_handler(

@@ -43,6 +43,21 @@ api_startup.log
 *.pem
 *.key
 
+# Local SQLite databases (runtime created)
+*.db
+*.sqlite
+*.sqlite3
+
+# LaTeX intermediate build files
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.synctex.gz
+*.out
+*.toc
+
 # IDEs & System
 .vscode/
 .idea/

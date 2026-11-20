@@ -75,7 +75,7 @@ def filter_user_profile(user_data: Dict[str, Any]) -> Dict[str, Any]:
     Guarantees:
     - password_hash, salts, and secret keys are stripped.
     """
-    safe_fields = {"id", "email", "full_name", "is_active", "created_at"}
+    safe_fields = {"id", "email", "full_name", "role", "helper_name", "helper_phone", "created_at", "last_login", "is_active"}
     return {k: v for k, v in user_data.items() if k in safe_fields and k != "password_hash"}
 
 

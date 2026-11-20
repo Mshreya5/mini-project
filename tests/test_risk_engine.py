@@ -143,8 +143,6 @@ def test_degraded_reason_does_not_contradict_final_level(risk_config) -> None:
     )
 
     assert result.level == "MEDIUM"
-    # The score sentence is about points only; the floor must be explained too,
-    # otherwise the audit trail ends on "...maps to LOW" for a MEDIUM answer.
     assert any("raised to MEDIUM" in reason for reason in result.reasons)
     assert "raised to" in result.reasons[-1]
 

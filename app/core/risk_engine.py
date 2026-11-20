@@ -135,24 +135,24 @@ class RiskEngine:
     ) -> bool:
         for key, expected in when.items():
             if key == "prediction_in":
-                if context.prediction not in expected:  # type: ignore[operator]
+                if context.prediction not in expected:
                     return False
             elif key == "confidence_gte":
-                if context.confidence is None or context.confidence < float(expected):  # type: ignore[arg-type]
+                if context.confidence is None or context.confidence < float(expected):
                     return False
             elif key == "url_risk_in":
-                if context.url_level not in expected:  # type: ignore[operator]
+                if context.url_level not in expected:
                     return False
             elif key == "has_link":
                 if bool(context.has_link) is not bool(expected):
                     return False
             elif key == "indicators_all":
-                if not set(expected).issubset(indicator_ids):  # type: ignore[arg-type]
+                if not set(expected).issubset(indicator_ids):
                     return False
             elif key == "indicators_any":
-                if not set(expected).intersection(indicator_ids):  # type: ignore[arg-type]
+                if not set(expected).intersection(indicator_ids):
                     return False
-            else:  # pragma: no cover - guarded by config validation
+            else:
                 raise ValueError(f"Unsupported override condition: {key}")
         return True
 
