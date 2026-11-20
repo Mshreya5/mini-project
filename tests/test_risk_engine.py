@@ -1,130 +1,171 @@
-"""
-Unit Tests for Risk Aggregation Engine
-Member 4: Risk Aggregation, Warning Logic and System Integration
-"""
+"""Unit tests for the aggregation mechanism itself."""
+
+from __future__ import annotations
+
 import pytest
-from backend.risk_engine import RiskAggregationEngine
-from backend.schemas import OverallRiskLevel, MessagePrediction, URLRiskLevel
+
+from app.core.models import Indicator
+from app.core.risk_engine import RiskEngine, highest_level
 
 
-@pytest.fixture
-def engine():
-    return RiskAggregationEngine()
+def indicator(config, indicator_id: str) -> Indicator:
+    resolved = config.resolve(indicator_id)
+    assert resolved is not None
+    return resolved
 
 
-def test_clean_legitimate_message(engine):
-    """Test 1: Legitimate message with no suspicious indicators produces LOW risk."""
-    message = "Hi Grandma, dinner is ready at 7 PM. See you soon!"
-    result = engine.aggregate_risk(
-        message=message,
-        ml_prediction=MessagePrediction.LEGITIMATE.value,
-        ml_confidence=0.95,
-        ml_triggers=[],
-        ml_available=True,
-        url_risk=URLRiskLevel.NO_URL.value,
-        url_indicators=[],
-        urls_found=[],
-        url_available=True
+def assess(config, indicators, **overrides):
+    engine = RiskEngine(config)
+    context = {
+        "prediction": "LEGITIMATE",
+        "confidence": 0.1,
+        "url_level": "NOT_APPLICABLE",
+        "has_link": False,
+    }
+    context.update(overrides)
+    return engine.assess(indicators, **context)
+
+
+def test_no_indicators_is_low(risk_config) -> None:
+    result = assess(risk_config, [])
+
+    assert result.level == "LOW"
+    assert result.score == 0
+
+
+def test_single_medium_indicator_stays_low(risk_config) -> None:
+    result = assess(risk_config, [indicator(risk_config, "URGENCY_PRESSURE")])
+
+    assert result.score == risk_config.severity_points["MEDIUM"]
+    assert result.level == "LOW"
+
+
+def test_two_medium_indicators_reach_medium(risk_config) -> None:
+    indicators = [
+        indicator(risk_config, "URGENCY_PRESSURE"),
+        indicator(risk_config, "IMPERSONATION"),
+    ]
+
+    result = assess(risk_config, indicators)
+
+    assert result.level == "MEDIUM"
+
+
+def test_per_module_cap_prevents_one_module_dominating(risk_config) -> None:
+    indicators = [
+        indicator(risk_config, "SCAM_PREDICTION"),
+        indicator(risk_config, "OTP_REQUEST"),
+        indicator(risk_config, "PAYMENT_REQUEST"),
+        indicator(risk_config, "BANK_DETAILS_REQUEST"),
+    ]
+
+    result = assess(risk_config, indicators)
+
+    assert result.raw_score == risk_config.severity_points["HIGH"] * 4
+    assert result.score == risk_config.module_caps["message"]
+    assert "message" in result.capped_sources
+
+
+def test_decisive_indicators_add_no_points(risk_config) -> None:
+    result = assess(
+        risk_config,
+        [indicator(risk_config, "MALICIOUS_URL")],
+        url_level="MALICIOUS",
+        has_link=True,
     )
 
-    assert result["overall_risk"] == OverallRiskLevel.LOW
-    assert result["composite_score"] < 0.35
-    assert len(result["risk_indicators"]) == 0
-
-
-def test_high_confidence_scam_message(engine):
-    """Test 2: High confidence scam prediction triggers HIGH risk escalation."""
-    message = "URGENT: Your SBI account is suspended! Update KYC immediately."
-    result = engine.aggregate_risk(
-        message=message,
-        ml_prediction=MessagePrediction.SCAM.value,
-        ml_confidence=0.92,
-        ml_triggers=["Urgent deadline pressure", "Bank impersonation"],
-        ml_available=True,
-        url_risk=URLRiskLevel.NO_URL.value,
-        url_indicators=[],
-        urls_found=[],
-        url_available=True
+    assert result.level == "HIGH"
+    assert result.score == 0
+    assert "OVR-02" in result.overrides
+    assert all(
+        contribution.indicator_id != "MALICIOUS_URL" for contribution in result.contributions
     )
 
-    assert result["overall_risk"] == OverallRiskLevel.HIGH
-    assert result["composite_score"] >= 0.70
-    assert "Urgent deadline pressure" in result["risk_indicators"]
 
-
-def test_malicious_url_override(engine):
-    """Test 3: Malicious URL escalates overall risk to HIGH even if text seems benign."""
-    message = "Click here for account update: http://192.168.1.100/login"
-    result = engine.aggregate_risk(
-        message=message,
-        ml_prediction=MessagePrediction.LEGITIMATE.value,
-        ml_confidence=0.60,
-        ml_triggers=[],
-        ml_available=True,
-        url_risk=URLRiskLevel.MALICIOUS.value,
-        url_indicators=["Direct IP address used in link"],
-        urls_found=["http://192.168.1.100/login"],
-        url_available=True
+def test_high_confidence_scam_override_needs_both_prediction_and_confidence(risk_config) -> None:
+    below = assess(
+        risk_config,
+        [indicator(risk_config, "SCAM_PREDICTION")],
+        prediction="SCAM",
+        confidence=0.7,
+    )
+    above = assess(
+        risk_config,
+        [indicator(risk_config, "SCAM_PREDICTION")],
+        prediction="SCAM",
+        confidence=0.85,
     )
 
-    assert result["overall_risk"] == OverallRiskLevel.HIGH
-    assert result["composite_score"] >= 0.70
+    assert "OVR-01" not in below.overrides
+    assert below.level == "MEDIUM"
+    assert "OVR-01" in above.overrides
+    assert above.level == "HIGH"
 
 
-def test_otp_credential_theft_escalation(engine):
-    """Test 4: OTP or password solicitation escalates to HIGH risk."""
-    message = "Dear customer, your OTP is 948271. Share it with our executive to avoid account block."
-    result = engine.aggregate_risk(
-        message=message,
-        ml_prediction=MessagePrediction.SUSPICIOUS.value,
-        ml_confidence=0.65,
-        ml_triggers=["Credential request"],
-        ml_available=True,
-        url_risk=URLRiskLevel.NO_URL.value,
-        url_indicators=[],
-        urls_found=[],
-        url_available=True
+def test_otp_with_link_override_requires_a_link(risk_config) -> None:
+    without_link = assess(
+        risk_config,
+        [indicator(risk_config, "OTP_REQUEST")],
+        has_link=False,
+    )
+    with_link = assess(
+        risk_config,
+        [indicator(risk_config, "OTP_REQUEST")],
+        has_link=True,
+        url_level="SAFE",
     )
 
-    assert result["overall_risk"] == OverallRiskLevel.HIGH
-    assert any("OTP" in ind for ind in result["risk_indicators"])
+    assert without_link.level == "MEDIUM"
+    assert with_link.level == "HIGH"
+    assert "OVR-03" in with_link.overrides
+    assert any(item.id == "OTP_REQUEST_WITH_LINK" for item in with_link.indicators)
 
 
-def test_single_suspicious_indicator_yields_medium(engine):
-    """Test 5: Single moderate indicator yields MEDIUM risk."""
-    message = "Please check our seasonal discount at http://bit.ly/festive-deal"
-    result = engine.aggregate_risk(
-        message=message,
-        ml_prediction=MessagePrediction.LEGITIMATE.value,
-        ml_confidence=0.80,
-        ml_triggers=[],
-        ml_available=True,
-        url_risk=URLRiskLevel.SUSPICIOUS.value,
-        url_indicators=["Shortened link"],
-        urls_found=["http://bit.ly/festive-deal"],
-        url_available=True
+def test_degraded_floor_raises_low_to_medium(risk_config) -> None:
+    result = assess(
+        risk_config,
+        [indicator(risk_config, "MESSAGE_ANALYSIS_UNAVAILABLE")],
+        floor=risk_config.degraded_floor,
+        degraded=True,
     )
 
-    assert result["overall_risk"] == OverallRiskLevel.MEDIUM
-    assert 0.35 <= result["composite_score"] <= 0.70
+    assert result.level == "MEDIUM"
+    assert result.degraded is True
 
 
-def test_service_unavailability_fails_safe(engine):
-    """Test 6: When ML or URL service is unavailable, message is NEVER classified as safe."""
-    message = "Important update regarding your account at http://unknown-link.com"
-    result = engine.aggregate_risk(
-        message=message,
-        ml_prediction=MessagePrediction.UNVERIFIED.value,
-        ml_confidence=0.50,
-        ml_triggers=[],
-        ml_available=False,
-        url_risk=URLRiskLevel.UNVERIFIED.value,
-        url_indicators=[],
-        urls_found=["http://unknown-link.com"],
-        url_available=False
+def test_degraded_reason_does_not_contradict_final_level(risk_config) -> None:
+    """The audit trail must explain the returned level, not the pre-floor one."""
+    result = assess(
+        risk_config,
+        [indicator(risk_config, "MESSAGE_ANALYSIS_UNAVAILABLE")],
+        floor=risk_config.degraded_floor,
+        degraded=True,
     )
 
-    # Must be at least MEDIUM (fail-safe principle)
-    assert result["overall_risk"] in [OverallRiskLevel.MEDIUM, OverallRiskLevel.HIGH]
-    assert result["overall_risk"] != OverallRiskLevel.LOW
-    assert any("unavailable" in ind for ind in result["risk_indicators"])
+    assert result.level == "MEDIUM"
+    assert any("raised to MEDIUM" in reason for reason in result.reasons)
+    assert "raised to" in result.reasons[-1]
+
+
+def test_threshold_boundaries_are_inclusive(risk_config) -> None:
+    medium_threshold = risk_config.thresholds["medium"]
+    high_threshold = risk_config.thresholds["high"]
+    engine = RiskEngine(risk_config)
+
+    assert engine._level_for_score(medium_threshold - 1) == "LOW"
+    assert engine._level_for_score(medium_threshold) == "MEDIUM"
+    assert engine._level_for_score(high_threshold - 1) == "MEDIUM"
+    assert engine._level_for_score(high_threshold) == "HIGH"
+
+
+@pytest.mark.parametrize(
+    ("levels", "expected"),
+    [
+        (("LOW", "MEDIUM"), "MEDIUM"),
+        (("HIGH", "MEDIUM"), "HIGH"),
+        (("LOW", None), "LOW"),
+        ((None, None), "LOW"),
+    ],
+)
+def test_highest_level(levels, expected) -> None:
+    assert highest_level(*levels) == expected

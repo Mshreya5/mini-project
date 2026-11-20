@@ -2,7 +2,6 @@
 Frontend entry point redirecting to silvershield_frontend.py
 """
 import runpy
-import sys
 from pathlib import Path
 
 root_frontend = Path(__file__).parent.parent / "silvershield_frontend.py"

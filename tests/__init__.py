@@ -1,3 +1,1 @@
-"""
-Test Suite Package
-"""
+"""Member 2 Security Unit Tests Package."""

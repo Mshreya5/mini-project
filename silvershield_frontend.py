@@ -1,841 +1,1149 @@
 """
 SilverShield AI - Secure AI-Powered Elderly Digital Safety Companion
-Member 1: Frontend and Accessibility
+Clean, elegant, modern light-theme application with Purple + White + Lavender palette.
+Navigation is powered exclusively by a top-right Three-Dot Menu (⋮) with zero emojis.
 """
 
-import streamlit as st
-import json
-import urllib.parse
-import requests
+from __future__ import annotations
 
-from frontend.locales import LANGUAGES, TRANSLATIONS
+import json
+import logging
+import re
+import socket
+import sys
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+import requests
+import streamlit as st
+
+ROOT_DIR = Path(__file__).resolve().parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
+from frontend.locales import (
+    DAILY_SAFETY_TIPS,
+    LANGUAGES,
+    SCAM_LIBRARY_ITEMS,
+    TRANSLATIONS,
+    t,
+    translate_action,
+    translate_explanation,
+    translate_indicator,
+    translate_prediction,
+    translate_risk_level,
+    translate_url_risk,
+    translate_warning,
+)
+from frontend.styles import ICONS, get_css
+from frontend.components import (
+    log_analysis_history,
+    render_audio_narrator,
+    render_caregiver_share,
+    render_helpline_banner,
+    render_risk_card,
+    render_safety_actions,
+    render_threat_indicators,
+)
+
+logger = logging.getLogger("silvershield.frontend")
 
 st.set_page_config(
     page_title="SilverShield AI | Senior Digital Safety Companion",
-    page_icon="https://img.icons8.com/color/48/shield.png",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
-for key, default in {
-    "font_size_choice": "Large (22px)",
+DEFAULTS = {
+    "font_size_choice": "Standard (15px)",
     "high_contrast": False,
     "language": "English",
     "helper_name": "",
     "helper_relation": "",
     "helper_phone": "",
     "message_input": "",
-    "chat_history": []
-}.items():
-    if key not in st.session_state:
-        st.session_state[key] = default
-
-BACKEND_ASSESS_URL = "http://127.0.0.1:8000/api/v1/assess"
-BACKEND_HEALTH_URL = "http://127.0.0.1:8000/health"
-
-font_size_map = {"Standard (18px)": 18, "Large (22px)": 22, "Extra Large (26px)": 26}
-fs = font_size_map.get(st.session_state.font_size_choice, 22)
-
-if st.session_state.high_contrast:
-    bg      = "#0D0D0D"; card_bg = "#1A1A1A"; txt    = "#FFFFFF"
-    accent  = "#FFD700"; border  = "#FFFFFF"; sbg    = "#050505"
-    hi_bg   = "#3D0000"; me_bg   = "#3D2E00"; lo_bg  = "#003320"
-    hi_bdr  = "#FF4444"; me_bdr  = "#FFC107"; lo_bdr = "#22C55E"
-    btn_bg  = "#FFD700"; btn_txt = "#000000"
-    inp_bg  = "#1A1A1A"; inp_bdr = "#FFD700"
-else:
-    bg      = "#F0F4F8"; card_bg = "#FFFFFF"; txt    = "#1A2E44"
-    accent  = "#1565C0"; border  = "#CBD5E1"; sbg    = "#0F3460"
-    hi_bg   = "#FFF0F0"; me_bg   = "#FFFBEB"; lo_bg  = "#F0FFF4"
-    hi_bdr  = "#DC2626"; me_bdr  = "#D97706"; lo_bdr = "#16A34A"
-    btn_bg  = "#1565C0"; btn_txt = "#FFFFFF"
-    inp_bg  = "#FFFFFF"; inp_bdr = "#94A3B8"
-
-st.markdown(f"""
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
-
-*, *::before, *::after {{ box-sizing: border-box !important; }}
-
-html, body {{
-    overflow-x: hidden !important;
-    width: 100% !important;
-    max-width: 100vw !important;
-}}
-
-html, body, [class*="css"] {{
-    font-family: 'Inter', sans-serif !important;
-    background-color: {bg} !important;
-    color: {txt} !important;
-}}
-
-/* ── Kill ALL Streamlit horizontal overflow sources ── */
-.stApp, .stApp > div, section.main, section.main > div,
-.block-container, [data-testid="stAppViewContainer"],
-[data-testid="stVerticalBlock"], [data-testid="stHorizontalBlock"] {{
-    max-width: 100% !important;
-    overflow-x: hidden !important;
-}}
-
-.stApp {{ background-color: {bg} !important; }}
-
-.block-container {{
-    max-width: 100% !important;
-    width: 100% !important;
-    padding-left: 1.2rem !important;
-    padding-right: 1.2rem !important;
-    padding-top: 1.5rem !important;
-    padding-bottom: 3rem !important;
-}}
-
-/* ── Streamlit columns: prevent overflow, allow wrap ── */
-[data-testid="stHorizontalBlock"] {{
-    flex-wrap: wrap !important;
-    gap: 10px !important;
-    width: 100% !important;
-    overflow-x: hidden !important;
-}}
-[data-testid="stHorizontalBlock"] > div {{
-    min-width: 140px !important;
-    flex: 1 1 140px !important;
-    overflow: hidden !important;
-}}
-
-p, span, label, li {{
-    font-size: {fs}px !important;
-    line-height: 1.75 !important;
-    color: {txt} !important;
-    word-break: break-word !important;
-    overflow-wrap: anywhere !important;
-}}
-h1 {{
-    font-size: {fs+14}px !important;
-    font-weight: 800 !important; color: {accent} !important;
-    margin-bottom: 6px !important; line-height: 1.2 !important;
-    word-break: break-word !important;
-}}
-h2 {{
-    font-size: {fs+8}px !important;
-    font-weight: 700 !important; color: {accent} !important;
-    line-height: 1.3 !important; word-break: break-word !important;
-}}
-h3 {{
-    font-size: {fs+4}px !important;
-    font-weight: 700 !important; color: {txt} !important;
-    line-height: 1.35 !important; word-break: break-word !important;
-}}
-
-/* ── Buttons ── */
-div.stButton > button {{
-    min-height: 54px !important;
-    padding: 10px 14px !important;
-    font-size: {fs}px !important;
-    font-weight: 700 !important;
-    border-radius: 12px !important;
-    border: 2px solid {border} !important;
-    cursor: pointer !important;
-    transition: all 0.15s ease !important;
-    background-color: {card_bg} !important;
-    color: {txt} !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    white-space: normal !important;
-    word-break: break-word !important;
-    overflow-wrap: anywhere !important;
-    text-align: center !important;
-    line-height: 1.4 !important;
-    display: block !important;
-    overflow: hidden !important;
-}}
-div.stButton > button:hover {{
-    border-color: {accent} !important;
-    color: {accent} !important;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.12);
-}}
-div.stButton > button[kind="primary"] {{
-    background-color: {btn_bg} !important;
-    color: {btn_txt} !important;
-    border: 2px solid {btn_bg} !important;
-}}
-div.stButton > button[kind="primary"]:hover {{
-    opacity: 0.88 !important; color: {btn_txt} !important;
-}}
-
-/* ── Sidebar ── */
-[data-testid="stSidebar"] {{
-    background-color: {sbg} !important;
-    border-right: 3px solid {accent};
-}}
-[data-testid="stSidebar"] > div {{
-    overflow-x: hidden !important;
-    width: 100% !important;
-}}
-[data-testid="stSidebar"] * {{ color: #FFFFFF !important; }}
-[data-testid="stSidebar"] .stRadio label {{
-    font-size: {fs}px !important;
-    padding: 6px 0 !important;
-    white-space: normal !important;
-    word-break: break-word !important;
-}}
-
-/* ── All custom HTML blocks: never overflow ── */
-.ss-card, .ss-hero, .ss-rules-grid, .ss-rule-card,
-.alert-high, .alert-med, .alert-low,
-.ss-action-item, .ss-indicator, .ss-tip-card,
-.ss-helpline, .ss-info-box, .ss-wa-btn,
-.ss-status-online, .ss-status-offline {{
-    max-width: 100% !important;
-    overflow-x: hidden !important;
-    word-break: break-word !important;
-    overflow-wrap: anywhere !important;
-    box-sizing: border-box !important;
-}}
-
-.ss-card {{
-    background-color: {card_bg};
-    border: 1.5px solid {border};
-    border-radius: 16px;
-    padding: 22px 20px;
-    margin-bottom: 18px;
-    box-shadow: 0 2px 16px rgba(0,0,0,0.06);
-    width: 100%;
-}}
-
-.ss-hero {{
-    background: linear-gradient(135deg, {accent} 0%, #0D47A1 100%);
-    border-radius: 16px;
-    padding: 28px 22px;
-    margin-bottom: 22px;
-    width: 100%;
-}}
-.ss-hero h1, .ss-hero h2, .ss-hero p, .ss-hero span {{ color: #FFFFFF !important; }}
-.ss-hero-inner {{
-    display: flex;
-    align-items: flex-start;
-    gap: 14px;
-    flex-wrap: wrap;
-    margin-bottom: 12px;
-}}
-
-/* ── Rule cards: CSS grid that truly responds ── */
-.ss-rules-grid {{
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 16px;
-    margin-bottom: 18px;
-    width: 100%;
-}}
-.ss-rule-card {{
-    background-color: {card_bg};
-    border-radius: 14px;
-    padding: 22px 18px;
-    border-top: 6px solid;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.07);
-    text-align: center;
-    width: 100%;
-}}
-
-.alert-high {{
-    background-color: {hi_bg}; border-left: 8px solid {hi_bdr};
-    border-radius: 12px; padding: 18px 16px;
-    margin: 14px 0; width: 100%;
-}}
-.alert-med {{
-    background-color: {me_bg}; border-left: 8px solid {me_bdr};
-    border-radius: 12px; padding: 18px 16px;
-    margin: 14px 0; width: 100%;
-}}
-.alert-low {{
-    background-color: {lo_bg}; border-left: 8px solid {lo_bdr};
-    border-radius: 12px; padding: 18px 16px;
-    margin: 14px 0; width: 100%;
-}}
-.alert-inner {{
-    display: flex; align-items: flex-start; gap: 10px;
-    flex-wrap: wrap; margin-bottom: 8px;
-}}
-.alert-inner svg {{ flex-shrink: 0; margin-top: 2px; }}
-
-.ss-action-item {{
-    background-color: {lo_bg}; border: 1.5px solid {lo_bdr};
-    border-radius: 10px; padding: 11px 14px; margin-bottom: 8px;
-    font-size: {fs-1}px !important;
-    color: {txt} !important; font-weight: 600;
-    display: flex; align-items: flex-start; gap: 8px; width: 100%;
-}}
-.ss-action-item svg {{ flex-shrink: 0; margin-top: 2px; }}
-.ss-indicator {{
-    background-color: {hi_bg}; border: 1.5px solid {hi_bdr};
-    border-radius: 10px; padding: 11px 14px; margin-bottom: 8px;
-    font-size: {fs-1}px !important;
-    color: {hi_bdr} !important; font-weight: 600;
-    display: flex; align-items: flex-start; gap: 8px; width: 100%;
-}}
-.ss-indicator svg {{ flex-shrink: 0; margin-top: 2px; }}
-
-.ss-tip-card {{
-    background-color: {card_bg}; border: 1.5px solid {border};
-    border-radius: 14px; padding: 18px 16px;
-    margin-bottom: 14px; display: flex; gap: 14px; align-items: flex-start;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05); width: 100%;
-    flex-wrap: wrap;
-}}
-.ss-tip-icon {{
-    flex-shrink: 0; width: 52px; height: 52px; border-radius: 12px;
-    display: flex; align-items: center; justify-content: center;
-}}
-.ss-tip-body {{ flex: 1; min-width: 0; }}
-
-.ss-helpline {{
-    background: linear-gradient(135deg, #7B0000 0%, #C62828 100%);
-    border-radius: 14px; padding: 22px 18px;
-    margin-top: 18px; width: 100%;
-}}
-.ss-helpline * {{ color: #FFFFFF !important; }}
-.ss-helpline-inner {{
-    display: flex; align-items: center; gap: 10px;
-    flex-wrap: wrap; margin-bottom: 10px;
-}}
-.ss-helpline-number {{
-    display: flex; align-items: center; gap: 14px;
-    flex-wrap: wrap; margin-top: 12px;
-}}
-
-.ss-status-online {{
-    display: inline-flex; align-items: center; gap: 8px;
-    background: {lo_bg}; border: 1.5px solid {lo_bdr};
-    border-radius: 30px; padding: 6px 14px;
-    font-weight: 700; font-size: {fs-2}px !important;
-    color: {lo_bdr} !important; margin-bottom: 14px;
-    max-width: 100%;
-}}
-.ss-status-offline {{
-    display: inline-flex; align-items: center; gap: 8px;
-    background: {me_bg}; border: 1.5px solid {me_bdr};
-    border-radius: 30px; padding: 6px 14px;
-    font-weight: 700; font-size: {fs-2}px !important;
-    color: {me_bdr} !important; margin-bottom: 14px;
-    max-width: 100%;
-}}
-
-textarea, input[type="text"] {{
-    background-color: {inp_bg} !important; border: 2px solid {inp_bdr} !important;
-    border-radius: 10px !important; font-size: {fs}px !important;
-    color: {txt} !important; padding: 12px !important;
-    width: 100% !important; max-width: 100% !important;
-    box-sizing: border-box !important;
-}}
-.stTextArea textarea {{ min-height: 140px !important; }}
-.stCheckbox label {{ font-size: {fs}px !important; }}
-.stSelectbox div[data-baseweb="select"] {{
-    font-size: {fs}px !important; border-radius: 10px !important;
-}}
-
-.ss-wa-btn {{
-    display: flex; align-items: center; justify-content: center; gap: 10px;
-    background-color: #25D366; color: white !important;
-    padding: 14px 20px;
-    font-size: {fs}px; font-weight: 700;
-    border-radius: 12px; cursor: pointer; width: 100%;
-    box-shadow: 0 3px 12px rgba(37,211,102,0.3);
-    text-decoration: none; flex-wrap: wrap;
-    box-sizing: border-box;
-}}
-
-.ss-brand {{
-    display: flex; align-items: center; gap: 10px;
-    padding: 8px 0 6px 0; overflow: hidden;
-}}
-.ss-brand-text {{ min-width: 0; overflow: hidden; }}
-
-.ss-info-box {{
-    display: flex; align-items: flex-start; gap: 10px;
-    background-color: {card_bg}; border: 1.5px solid {border};
-    border-left: 6px solid {accent}; border-radius: 12px;
-    padding: 16px 16px;
-    margin-top: 8px; width: 100%;
-}}
-.ss-info-box svg {{ flex-shrink: 0; margin-top: 2px; }}
-.ss-info-box p {{ min-width: 0; }}
-</style>
-""", unsafe_allow_html=True)
-
-# ── SVG ICONS ──
-ICONS = {
-    "shield":  '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
-    "lock":    '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#1565C0" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
-    "clock":   '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
-    "people":  '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
-    "police":  '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
-    "bulb":    '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2"><line x1="9" y1="18" x2="15" y2="18"/><line x1="10" y1="22" x2="14" y2="22"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg>',
-    "bank":    '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#1565C0" stroke-width="2"><line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg>',
-    "phone":   '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>',
-    "speaker": '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>',
-    "whatsapp":'<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>',
-    "check":   '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>',
-    "warn":    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
-    "user":    '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#1565C0" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
-    "bot":     '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><line x1="12" y1="7" x2="12" y2="11"/><line x1="8" y1="15" x2="8.01" y2="15"/><line x1="16" y1="15" x2="16.01" y2="15"/></svg>',
-    "gear":    '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
-    "call":    '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.6 1.22h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.82a16 16 0 0 0 6.29 6.29l.96-.96a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>',
-    "info":    '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="{accent}" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
+    "url_input": "",
+    "daily_tip_idx": 0,
+    "analysis_history": [],
+    "quiz_submitted": False,
+    "quiz_answers": {},
+    "active_nav": "nav_dashboard",
+    "last_message_result": None,
+    "last_url_result": None,
+    "auth_token": "",
+    "auth_user": None,
 }
 
+for k, val in DEFAULTS.items():
+    if k not in st.session_state:
+        st.session_state[k] = val
 
-def render_audio_narrator(text_to_speak: str, lang_code: str, button_label: str = "Read this aloud"):
-    escaped = json.dumps(text_to_speak, ensure_ascii=False)
-    uid = abs(hash(text_to_speak[:30])) % 99999
-    html = f"""
-    <div style="margin:12px 0;">
-      <button onclick="ssSpeak{uid}()" style="
-          background-color:#1565C0;color:white;
-          padding:clamp(10px,14px,16px) clamp(16px,22px,26px);
-          font-size:clamp(13px,{fs}px,{fs+1}px);font-weight:700;
-          border:none;border-radius:12px;cursor:pointer;
-          display:inline-flex;align-items:center;gap:10px;
-          box-shadow:0 3px 10px rgba(21,101,192,0.3);
-          max-width:100%;white-space:normal;word-break:break-word;">
-        {ICONS['speaker']} {button_label}
-      </button>
-      <script>
-      function ssSpeak{uid}(){{
-        if(!('speechSynthesis' in window)){{ alert('Audio not supported in this browser.'); return; }}
-        window.speechSynthesis.cancel();
-        var u=new SpeechSynthesisUtterance({escaped});
-        u.lang='{lang_code}';u.rate=0.85;u.pitch=1.0;
-        window.speechSynthesis.speak(u);
-      }}
-      </script>
-    </div>"""
-    st.components.v1.html(html, height=68)
+FONT_MAP = {
+    "Compact (14px)": 14,
+    "Standard (15px)": 15,
+    "Large (17px)": 17,
+}
+current_fs = FONT_MAP.get(st.session_state.font_size_choice, 15)
+lang = st.session_state.language
+lang_code = LANGUAGES.get(lang, "en-IN")
+
+st.markdown(get_css(font_size=current_fs, high_contrast=st.session_state.high_contrast), unsafe_allow_html=True)
+
+BACKEND_BASE_URL = os.environ.get("BACKEND_URL", "http://127.0.0.1:8000").rstrip("/")
+BACKEND_HEALTH_URL = f"{BACKEND_BASE_URL}/health"
+BACKEND_ANALYZE_URL = f"{BACKEND_BASE_URL}/api/v1/analyze"
+URL_SERVICE_URL = os.environ.get("URL_SERVICE_URL", "http://127.0.0.1:8002/analyze-url")
+SCAM_SERVICE_URL = os.environ.get("SCAM_SERVICE_URL", "http://127.0.0.1:8001/predict")
 
 
-def check_backend_health():
+def check_live_backend() -> bool:
     try:
-        r = requests.get(BACKEND_HEALTH_URL, timeout=1.5)
-        return r.status_code == 200
+        parsed = urllib.parse.urlparse(BACKEND_BASE_URL)
+        host = parsed.hostname or "127.0.0.1"
+        port = parsed.port or (443 if parsed.scheme == "https" else 80)
+        with socket.create_connection((host, port), timeout=0.2):
+            return True
     except Exception:
         return False
 
 
-def run_local_fallback_assessment(message: str, lang: str):
-    from backend.risk_engine import RiskAggregationEngine
-    from backend.warning_generator import WarningGenerator
-    from backend.integrations import IntegrationClient
-    engine = RiskAggregationEngine()
-    urls = IntegrationClient.extract_urls(message)
-    has_url = len(urls) > 0
-    tl = message.lower()
-    is_scam = any(w in tl for w in ["blocked","suspended","kyc","otp","police","arrest","lottery","won","crore"])
-    is_sus  = any("bit.ly" in u or "tinyurl" in u or "192.168" in u for u in urls)
-    ml_pred = "SCAM" if is_scam else "LEGITIMATE"
-    ml_conf = 0.88 if is_scam else 0.92
-    url_risk = "SUSPICIOUS" if is_sus else ("SAFE" if has_url else "NO_URL")
-    assessment = engine.aggregate_risk(
-        message=message, ml_prediction=ml_pred, ml_confidence=ml_conf,
-        ml_triggers=["Keyword Scam Pattern Detected"] if is_scam else [],
-        ml_available=True, url_risk=url_risk,
-        url_indicators=["Shortened / Masked URL"] if is_sus else [],
-        urls_found=urls, url_available=True)
-    overall_risk = assessment["overall_risk"]
-    indicators   = assessment["risk_indicators"]
-    warning  = WarningGenerator.generate_warning(overall_risk, indicators, lang)
-    actions  = WarningGenerator.generate_recommended_actions(
-        overall_risk, indicators, has_url=has_url, message_text=message, language=lang)
-    return {
-        "overall_risk": overall_risk.value, "message_prediction": ml_pred,
-        "url_risk": url_risk, "risk_indicators": indicators,
-        "warning": warning, "recommended_actions": actions,
-        "risk_score": assessment["composite_score"],
-        "module_status": {"ml_service": "STANDALONE_FALLBACK", "url_service": "STANDALONE_FALLBACK"}
-    }
+def run_integrated_analysis(message_text: str, url_override: Optional[str] = None) -> Dict[str, Any]:
+    is_live = check_live_backend()
+    if is_live:
+        try:
+            payload = {
+                "message": message_text.strip(),
+                "url": url_override.strip() if url_override else None,
+                "language": lang,
+                "consent_given": True,
+            }
+            resp = requests.post(BACKEND_ANALYZE_URL, json=payload, timeout=5.0)
+            if resp.status_code == 200:
+                data = resp.json()
+                data["source"] = "live_api"
+                return data
+        except Exception as e:
+            logger.warning("Live API call failed: %s; falling back to direct engine.", e)
 
+    from ai_module.src.predict import predict_message
+    from url_analysis.analyzer import analyze_url
+    from app.clients.scam_detector import parse_message_payload
+    from app.clients.url_analyzer import parse_url_payload
+    from app.core.models import RemoteCallResult, ModuleState
+    from app.core.orchestrator import RiskAggregator
+    from app.schemas import AnalyzeRequest
+    from app.settings import Settings, get_risk_config
 
-# ── SIDEBAR ──
-with st.sidebar:
-    st.markdown(f"""
-    <div class="ss-brand">
-      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="2.2" style="flex-shrink:0;">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-      </svg>
-      <div class="ss-brand-text">
-        <div style="font-size:clamp(16px,{fs+2}px,{fs+4}px);font-weight:800;color:#FFFFFF;white-space:nowrap;">SilverShield AI</div>
-        <div style="font-size:clamp(11px,{fs-4}px,{fs-2}px);color:#CBD5E1;">Digital Safety Companion</div>
-      </div>
-    </div>
-    """, unsafe_allow_html=True)
-    st.divider()
+    class InProcessScamClient:
+        def analyze(self, msg: str):
+            res = predict_message(msg)
+            analysis = parse_message_payload(res)
+            return RemoteCallResult(state=ModuleState.OK, data=analysis, latency_ms=12)
 
-    st.markdown(f"<div style='font-size:clamp(11px,{fs-3}px,{fs-1}px);font-weight:700;color:#94A3B8;letter-spacing:1px;margin-bottom:8px;'>LANGUAGE</div>", unsafe_allow_html=True)
-    selected_language = st.selectbox(
-        "Language", ["English", "Hindi", "Kannada"],
-        index=["English", "Hindi", "Kannada"].index(st.session_state.language),
-        label_visibility="collapsed"
+    class InProcessUrlClient:
+        def analyze(self, target_url: str):
+            res = analyze_url(target_url)
+            u_dict = {
+                "url": res.url,
+                "url_found": res.url_found,
+                "suspicious": res.suspicious,
+                "risk_score": res.risk_score,
+                "risk_indicators": res.risk_indicators,
+                "explanation": res.explanation
+            }
+            payload = {"results": [u_dict]}
+            analysis = parse_url_payload(payload, target_url)
+            return RemoteCallResult(state=ModuleState.OK, data=analysis, latency_ms=8)
+
+    cfg = get_risk_config()
+    aggregator = RiskAggregator(
+        scam_client=InProcessScamClient(),
+        url_client=InProcessUrlClient(),
+        config=cfg,
+        settings=Settings()
     )
-    st.session_state.language = selected_language
-    t = TRANSLATIONS[selected_language]
-    current_lang_code = LANGUAGES[selected_language]
 
-    st.divider()
-    st.markdown(f"<div style='font-size:clamp(11px,{fs-3}px,{fs-1}px);font-weight:700;color:#94A3B8;letter-spacing:1px;margin-bottom:8px;'>MENU</div>", unsafe_allow_html=True)
-    nav_labels = {
-        "home":     t["home"],
-        "check":    t["check_message"],
-        "tips":     t["safety_tips"],
-        "helper":   t["trusted_helper"],
-        "bot":      t["safety_bot"],
-        "settings": t["settings"]
+    req = AnalyzeRequest(
+        message=message_text.strip(),
+        url=url_override.strip() if url_override else None,
+        language=lang,
+        consent_given=True
+    )
+    result = aggregator.aggregate(req)
+
+    clean_indicators = []
+    if result.scam_analysis and result.scam_analysis.indicators:
+        clean_indicators.extend(result.scam_analysis.indicators)
+    if result.url_analysis and result.url_analysis.indicators:
+        clean_indicators.extend(result.url_analysis.indicators)
+
+    raw_conf = result.scam_analysis.confidence if result.scam_analysis else None
+    if raw_conf is not None and raw_conf > 1.0:
+        raw_conf = raw_conf / 100.0
+
+    return {
+        "overall_risk_score": result.score,
+        "overall_risk_level": result.level.value,
+        "is_scam": result.scam_analysis.is_scam if result.scam_analysis else False,
+        "message_prediction": result.scam_analysis.prediction if result.scam_analysis else "UNKNOWN",
+        "message_confidence": raw_conf,
+        "url_risk": result.url_analysis.risk_level if result.url_analysis else "NOT_APPLICABLE",
+        "url_score": result.url_analysis.raw_score if result.url_analysis else 0,
+        "risk_score": result.score / 100.0,
+        "warning": result.action_advice.warning_message if result.action_advice else "Stay cautious.",
+        "explanation": result.explanation or "Analysis completed by SilverShield AI safety engine.",
+        "risk_indicators": clean_indicators,
+        "recommended_actions": result.action_advice.recommended_actions if result.action_advice else [
+            "Do not click unknown links or share credentials.",
+            "Verify suspicious messages with a trusted family member."
+        ],
+        "source": "local_engine"
     }
-    selected_page_label = st.radio("Menu", list(nav_labels.values()), label_visibility="collapsed")
-    page_key = [k for k, v in nav_labels.items() if v == selected_page_label][0]
 
+
+def run_standalone_url_analysis(target_url: str) -> Dict[str, Any]:
+    clean_url = target_url.strip()
+    try:
+        with socket.create_connection(("127.0.0.1", 8002), timeout=0.08):
+            resp = requests.post(URL_SERVICE_URL, json={"url": clean_url}, timeout=3.0)
+            if resp.status_code == 200:
+                data = resp.json()
+                data["source"] = "url_api"
+                return data
+    except Exception:
+        pass
+
+    from url_analysis.analyzer import analyze_url
+    ar = analyze_url(clean_url)
+    return {
+        "url": ar.url,
+        "url_found": ar.url_found,
+        "suspicious": ar.suspicious,
+        "risk_score": ar.risk_score,
+        "risk_indicators": ar.risk_indicators,
+        "explanation": ar.explanation,
+        "source": "local_analyzer"
+    }
+
+
+nav_sections = [
+    ("nav_dashboard", t("nav_dashboard", lang), ICONS['home']),
+    ("nav_message_checker", t("nav_message_checker", lang), ICONS['message']),
+    ("nav_url_checker", t("nav_url_checker", lang), ICONS['globe']),
+    ("nav_awareness", t("nav_awareness", lang), ICONS['shield_check']),
+    ("nav_safety_guide", t("nav_safety_guide", lang), ICONS['book']),
+    ("nav_settings", t("nav_settings", lang), ICONS['settings']),
+    ("nav_account", t("nav_account", lang), ICONS['lock']),
+]
+
+header_col1, header_col2 = st.columns([8, 2], vertical_alignment="center")
+
+with header_col1:
+    is_live = check_live_backend()
+    status_text = t("system_status_live", lang) if is_live else t("system_status_fallback", lang)
+    status_badge = "ss-badge-teal" if is_live else "ss-badge-purple"
+    
+    st.markdown(f"""
+    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:6px 0;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        {ICONS['shield_main']}
+        <span style="font-size:19px; font-weight:800; color:#49316F; letter-spacing:-0.4px;">SilverShield AI</span>
+      </div>
+      <span style="color:#D8CBEF; font-size:13px;">|</span>
+      <span style="font-size:13px; color:#777185; font-weight:500;">{t('app_tagline', lang)}</span>
+      <span class="ss-badge {status_badge}" style="margin-left:6px;">{status_text}</span>
+    </div>
+    """, unsafe_allow_html=True)
     st.divider()
-    st.markdown(f"<div style='font-size:clamp(11px,{fs-3}px,{fs-1}px);font-weight:700;color:#94A3B8;letter-spacing:1px;margin-bottom:8px;'>ACCESSIBILITY</div>", unsafe_allow_html=True)
-    st.session_state.high_contrast = st.toggle("High Contrast Mode", value=st.session_state.high_contrast)
-    st.markdown(f"<div style='font-size:clamp(11px,{fs-4}px,{fs-2}px);color:#94A3B8;margin-top:14px;line-height:1.6;'>If you feel worried about a message, pause and ask someone you trust.</div>", unsafe_allow_html=True)
 
-
-# ── HOME ──
-if page_key == "home":
-    st.markdown(f"""
-    <div class="ss-hero">
-      <div class="ss-hero-inner">
-        {ICONS['shield']}
-        <div style="flex:1;min-width:200px;">
-          <h1 style="color:white!important;margin:0 0 6px 0;">{t["welcome_hero"]}</h1>
-          <p style="color:rgba(255,255,255,0.88)!important;margin:0;font-size:clamp(14px,{fs+1}px,{fs+3}px);">{t["welcome_sub"]}</p>
-        </div>
-      </div>
-      <p style="color:rgba(255,255,255,0.9)!important;margin:0;font-size:clamp(14px,{fs}px,{fs+1}px);">{t["welcome_desc"]}</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-    render_audio_narrator(f"{t['welcome_hero']}. {t['welcome_sub']}. {t['welcome_desc']}", current_lang_code)
-
-    st.markdown(f"<h2 style='margin-bottom:18px;'>{t['card_rules_title']}</h2>", unsafe_allow_html=True)
-
-    st.markdown(f"""
-    <div class="ss-rules-grid">
-      <div class="ss-rule-card" style="border-top-color:#DC2626;">
-        <div style="margin-bottom:12px;">{ICONS['lock']}</div>
-        <div style="font-size:clamp(10px,{fs-4}px,{fs-2}px);font-weight:800;color:#DC2626;letter-spacing:1px;margin-bottom:6px;">RULE 1</div>
-        <h3 style="color:{txt}!important;margin-bottom:8px;">{t['rule_1_title']}</h3>
-        <p style="color:{txt}!important;margin:0;">{t['rule_1_desc']}</p>
-      </div>
-      <div class="ss-rule-card" style="border-top-color:#D97706;">
-        <div style="margin-bottom:12px;">{ICONS['clock']}</div>
-        <div style="font-size:clamp(10px,{fs-4}px,{fs-2}px);font-weight:800;color:#D97706;letter-spacing:1px;margin-bottom:6px;">RULE 2</div>
-        <h3 style="color:{txt}!important;margin-bottom:8px;">{t['rule_2_title']}</h3>
-        <p style="color:{txt}!important;margin:0;">{t['rule_2_desc']}</p>
-      </div>
-      <div class="ss-rule-card" style="border-top-color:#16A34A;">
-        <div style="margin-bottom:12px;">{ICONS['people']}</div>
-        <div style="font-size:clamp(10px,{fs-4}px,{fs-2}px);font-weight:800;color:#16A34A;letter-spacing:1px;margin-bottom:6px;">RULE 3</div>
-        <h3 style="color:{txt}!important;margin-bottom:8px;">{t['rule_3_title']}</h3>
-        <p style="color:{txt}!important;margin:0;">{t['rule_3_desc']}</p>
-      </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    st.markdown(f"""
-    <div class="ss-info-box">
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="{accent}" stroke-width="2.5" style="flex-shrink:0;margin-top:2px;">
-        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-      </svg>
-      <p style="margin:0;font-weight:600;">Tip: Select <b>Check a Message</b> from the left menu to verify any suspicious SMS or WhatsApp message you received.</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-
-# ── CHECK A MESSAGE ──
-elif page_key == "check":
-    st.markdown(f"<h1>{t['check_title']}</h1>", unsafe_allow_html=True)
-    st.markdown(f"<p style='font-size:clamp(14px,{fs}px,{fs+1}px);margin-bottom:18px;'>{t['check_subtitle']}</p>", unsafe_allow_html=True)
-
-    is_live_backend = check_backend_health()
-    if is_live_backend:
-        st.markdown(f'<div class="ss-status-online"><svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="5" fill="#16A34A"/></svg>{t["backend_connected"]}</div>', unsafe_allow_html=True)
-    else:
-        st.markdown(f'<div class="ss-status-offline"><svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="5" fill="#D97706"/></svg>{t["backend_fallback"]}</div>', unsafe_allow_html=True)
-
-    st.markdown(f"<h3 style='margin-bottom:12px;'>{t['sample_prompts_label']}</h3>", unsafe_allow_html=True)
-
-    samples = [
-        (t["sample_sbi"],   "URGENT: Your SBI netbanking account is suspended due to expired KYC. Update immediately at http://bit.ly/sbi-kyc-verify to prevent permanent block."),
-        (t["sample_otp"],   "Your one time password (OTP) is 748291. Share this with the bank executive on call to cancel unauthorized debit of Rs 15,000."),
-        (t["sample_power"], "Dear consumer, your electricity connection will be disconnected tonight at 9:30 PM because previous bill was unpaid. Call officer immediately at 9876543210."),
-        (t["sample_legit"], "Hi Grandma, I have reached home safely from college. See you for dinner at 8 PM!"),
-    ]
-
-    for i, (label, msg) in enumerate(samples):
-        if st.button(label, key=f"sample_{i}", use_container_width=True):
-            st.session_state.message_input = msg
+with header_col2:
+    btn_sub_c1, btn_sub_c2 = st.columns([1, 1], vertical_alignment="center")
+    
+    with btn_sub_c1:
+        is_set_active = (st.session_state.active_nav == "nav_settings")
+        if st.button("Settings", key="quick_top_settings_btn", type="primary" if is_set_active else "secondary", use_container_width=True):
+            st.session_state.active_nav = "nav_settings"
             st.rerun()
 
-    st.markdown("<div style='height:8px;'></div>", unsafe_allow_html=True)
-
-    user_message = st.text_area(
-        t["message_box_label"],
-        value=st.session_state.message_input,
-        placeholder=t["message_box_placeholder"],
-        height=150
-    )
-
-    check_clicked = st.button(t["btn_check"], type="primary", use_container_width=True)
-    if st.button(t["btn_clear"], use_container_width=True):
-        st.session_state.message_input = ""
-        st.rerun()
-
-    if check_clicked:
-        clean_text = user_message.strip()
-        if not clean_text:
-            st.warning("Please paste or type a message first.")
-        else:
-            with st.spinner("Analyzing message safety..."):
-                assessment_data = None
-                if is_live_backend:
-                    try:
-                        resp = requests.post(BACKEND_ASSESS_URL,
-                            json={"message": clean_text, "language": selected_language}, timeout=4.0)
-                        if resp.status_code == 200:
-                            assessment_data = resp.json()
-                    except Exception as e:
-                        st.warning(f"Could not reach live backend: {e}. Using standalone mode.")
-                if not assessment_data:
-                    assessment_data = run_local_fallback_assessment(clean_text, selected_language)
-
-            risk_level = assessment_data.get("overall_risk", "MEDIUM")
-            warning    = assessment_data.get("warning", "")
-            actions    = assessment_data.get("recommended_actions", [])
-            indicators = assessment_data.get("risk_indicators", [])
-            risk_score = assessment_data.get("risk_score", 0.5)
-
-            st.markdown("---")
-
-            if risk_level == "HIGH":
-                icon_svg = f'<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="{hi_bdr}" stroke-width="2.5" style="flex-shrink:0;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
-                st.markdown(f"""
-                <div class="alert-high">
-                  <div class="alert-inner">{icon_svg}<h2 style="color:{hi_bdr}!important;margin:0;">{t['risk_high_title']}</h2></div>
-                  <p style="font-size:clamp(14px,{fs+1}px,{fs+2}px);font-weight:700;color:{txt}!important;margin:0;">{warning}</p>
-                </div>""", unsafe_allow_html=True)
-            elif risk_level == "MEDIUM":
-                icon_svg = f'<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="{me_bdr}" stroke-width="2.5" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
-                st.markdown(f"""
-                <div class="alert-med">
-                  <div class="alert-inner">{icon_svg}<h2 style="color:{me_bdr}!important;margin:0;">{t['risk_med_title']}</h2></div>
-                  <p style="font-size:clamp(14px,{fs+1}px,{fs+2}px);font-weight:700;color:{txt}!important;margin:0;">{warning}</p>
-                </div>""", unsafe_allow_html=True)
-            else:
-                icon_svg = f'<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="{lo_bdr}" stroke-width="2.5" style="flex-shrink:0;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
-                st.markdown(f"""
-                <div class="alert-low">
-                  <div class="alert-inner">{icon_svg}<h2 style="color:{lo_bdr}!important;margin:0;">{t['risk_low_title']}</h2></div>
-                  <p style="font-size:clamp(14px,{fs+1}px,{fs+2}px);font-weight:700;color:{txt}!important;margin:0;">{warning}</p>
-                </div>""", unsafe_allow_html=True)
-
-            render_audio_narrator(f"{warning}. " + " ".join(actions), current_lang_code, button_label=t["read_aloud_btn"])
-
-            st.markdown(f"<h3 style='margin-top:18px;margin-bottom:10px;'>{t['actions_title']}</h3>", unsafe_allow_html=True)
-            for action in actions:
-                st.markdown(f'<div class="ss-action-item">{ICONS["check"]} <span>{action}</span></div>', unsafe_allow_html=True)
-
-            if indicators:
-                st.markdown(f"<h3 style='margin-top:18px;margin-bottom:10px;'>{t['indicators_title']}</h3>", unsafe_allow_html=True)
-                for ind in indicators:
-                    st.markdown(f'<div class="ss-indicator">{ICONS["warn"]} <span>{ind}</span></div>', unsafe_allow_html=True)
-
-            st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
-            helper_phone = st.session_state.helper_phone.strip()
-            helper_name  = st.session_state.helper_name.strip() or "Caregiver"
-            if helper_phone:
-                encoded_msg = urllib.parse.quote(
-                    f"{t['helper_whatsapp_msg']}\n\n\"{clean_text[:120]}...\"\n\nResult: {risk_level} Risk.\nWarning: {warning}")
-                wa_url = f"https://wa.me/{helper_phone}?text={encoded_msg}"
-                st.markdown(f"""
-                <a href="{wa_url}" target="_blank" style="text-decoration:none;display:block;">
-                  <div class="ss-wa-btn">{ICONS['whatsapp']} Alert {helper_name} via WhatsApp</div>
-                </a>""", unsafe_allow_html=True)
-            else:
-                st.markdown(f"""
-                <div class="ss-info-box">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="{me_bdr}" stroke-width="2.5" style="flex-shrink:0;margin-top:2px;">
-                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-                  </svg>
-                  <p style="margin:0;font-weight:600;">Add your trusted family member's phone number under <b>Trusted Helper</b> in the menu to alert them in one tap.</p>
-                </div>""", unsafe_allow_html=True)
-
-            with st.expander(t["technical_details"]):
-                st.write("**Overall Risk Level:**", risk_level)
-                st.write("**Risk Score (0.0 to 1.0):**", round(risk_score, 4))
-                st.write("**ML Classification (Member 2):**", assessment_data.get("message_prediction"))
-                st.write("**URL Threat Level (Member 3):**", assessment_data.get("url_risk"))
-                st.write("**Module Status:**", assessment_data.get("module_status"))
-                st.json(assessment_data)
+    with btn_sub_c2:
+        with st.popover("⋮", use_container_width=True):
+            st.markdown(f"<div style='font-size:11px; font-weight:700; color:#49316F; text-transform:uppercase; margin-bottom:8px; letter-spacing:0.4px;'>Menu Options</div>", unsafe_allow_html=True)
+            for nav_key, nav_title, nav_icon in nav_sections:
+                is_active = (st.session_state.active_nav == nav_key)
+                
+                n_c1, n_c2 = st.columns([1, 6], vertical_alignment="center")
+                with n_c1:
+                    st.markdown(f"<div style='display:flex; align-items:center; justify-content:center; padding-top:4px;'>{nav_icon}</div>", unsafe_allow_html=True)
+                with n_c2:
+                    if st.button(nav_title, key=f"popnav_{nav_key}", type="primary" if is_active else "secondary", use_container_width=True):
+                        st.session_state.active_nav = nav_key
+                        st.rerun()
 
 
-# ── SCAM AWARENESS ──
-elif page_key == "tips":
-    st.markdown(f"<h1>{t['tips_title']}</h1>", unsafe_allow_html=True)
-    st.markdown(f"<p style='font-size:clamp(14px,{fs}px,{fs+1}px);margin-bottom:22px;'>{t['tips_sub']}</p>", unsafe_allow_html=True)
-
-    scams = [
-        (t["scam_1_title"], t["scam_1_desc"], ICONS["police"], "#DC2626"),
-        (t["scam_2_title"], t["scam_2_desc"], ICONS["bulb"],   "#D97706"),
-        (t["scam_3_title"], t["scam_3_desc"], ICONS["bank"],   "#1565C0"),
-        (t["scam_4_title"], t["scam_4_desc"], ICONS["phone"],  "#7C3AED"),
-    ]
-    for title, desc, icon, color in scams:
-        st.markdown(f"""
-        <div class="ss-tip-card">
-          <div class="ss-tip-icon" style="background:{color}18;">{icon}</div>
-          <div class="ss-tip-body">
-            <h3 style="color:{color}!important;margin:0 0 8px 0;">{title}</h3>
-            <p style="margin:0;">{desc}</p>
-          </div>
-        </div>""", unsafe_allow_html=True)
-
-    render_audio_narrator(". ".join(f"{t}: {d}" for t, d, _, __ in scams), current_lang_code)
-
-
-# ── TRUSTED HELPER ──
-elif page_key == "helper":
-    st.markdown(f"<h1>{t['helper_title']}</h1>", unsafe_allow_html=True)
-    st.markdown(f"<p style='font-size:clamp(14px,{fs}px,{fs+1}px);margin-bottom:22px;'>{t['helper_sub']}</p>", unsafe_allow_html=True)
-
-    with st.form("helper_form"):
-        h_name  = st.text_input(t["helper_name"],    value=st.session_state.helper_name)
-        h_rel   = st.text_input(t["helper_relation"], value=st.session_state.helper_relation)
-        h_phone = st.text_input(t["helper_phone"],    value=st.session_state.helper_phone,
-                                placeholder="e.g. 919876543210 (with country code)")
-        save_btn = st.form_submit_button("Save Details", type="primary")
-
-    if save_btn:
-        st.session_state.helper_name     = h_name.strip()
-        st.session_state.helper_relation = h_rel.strip()
-        st.session_state.helper_phone    = h_phone.strip()
-        st.success(t["helper_saved"])
-
-    st.divider()
-
-    if st.session_state.helper_name:
-        st.markdown(f"""
-        <div class="ss-card">
-          <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px;flex-wrap:wrap;">
-            <div style="width:52px;height:52px;background:{accent}18;border-radius:50%;
-                 display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-              {ICONS['user']}
-            </div>
-            <div>
-              <h3 style="margin:0;">{st.session_state.helper_name}</h3>
-              <p style="margin:0;color:#64748B;">{st.session_state.helper_relation or 'Relationship not specified'}</p>
-            </div>
-          </div>
-          <p style="margin:0;"><b>Contact:</b> {st.session_state.helper_phone or 'No number provided'}</p>
-        </div>""", unsafe_allow_html=True)
-    else:
-        st.markdown(f"""
-        <div class="ss-card">
-          <p style="margin:0;color:#64748B;">No helper added yet. Fill in the form above to save your trusted contact.</p>
-        </div>""", unsafe_allow_html=True)
-
+if st.session_state.active_nav == "nav_dashboard":
     st.markdown(f"""
-    <div class="ss-helpline">
-      <div class="ss-helpline-inner">
-        {ICONS['call']}
-        <h2 style="color:white!important;margin:0;">{t['emergency_helpline_title']}</h2>
+    <div class="ss-welcome-card">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px;">
+        <div>
+          <span class="ss-badge ss-badge-purple" style="margin-bottom:6px;">AI-Powered Protection</span>
+          <h1 style="color:#49316F !important; margin:4px 0 6px 0; font-size:23px;">{t('dash_hero_title', lang)}</h1>
+          <p style="color:#292438 !important; font-size:14px; margin:0; max-width:860px; line-height:1.55;">
+            {t('dash_hero_sub', lang)}
+          </p>
+        </div>
       </div>
-      <p style="color:rgba(255,255,255,0.9)!important;margin-bottom:0;">{t['emergency_helpline_desc']}</p>
-      <div class="ss-helpline-number">
-        <a href="tel:1930" style="text-decoration:none;">
-          <div style="background:white;color:#C62828;font-size:clamp(28px,{fs+12}px,{fs+16}px);
-               font-weight:900;border-radius:12px;padding:12px 28px;
-               display:inline-block;letter-spacing:3px;">1930</div>
-        </a>
-        <span style="color:rgba(255,255,255,0.85);font-size:clamp(12px,{fs-2}px,{fs}px);">Toll-Free, 24 hours, 7 days</span>
-      </div>
-    </div>""", unsafe_allow_html=True)
-
-
-# ── AI COMPANION ──
-elif page_key == "bot":
-    st.markdown(f"""
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;flex-wrap:wrap;">
-      {ICONS['bot']}
-      <h1 style="margin:0;">AI Safety Companion</h1>
     </div>
     <p style="font-size:clamp(14px,{fs}px,{fs+1}px);margin-bottom:22px;">Ask any question about staying safe on your phone or internet.</p>
     """, unsafe_allow_html=True)
 
-    sample_questions = [
-        "What should I do if someone calls asking for my OTP?",
-        "Someone sent a link saying my electricity will be cut. Is it real?",
-        "A caller says they are from Mumbai Police on video call. What should I do?",
-        "Can a stranger steal my money if I install AnyDesk?",
+    narrator_col, cta_col = st.columns([1, 2], vertical_alignment="center")
+    with narrator_col:
+        welcome_speech = f"{t('dash_hero_title', lang)}. {t('dash_hero_sub', lang)}"
+        render_audio_narrator(welcome_speech, lang_code, button_label=t("msg_btn_narrate", lang), font_size=current_fs)
+    with cta_col:
+        cta1, cta2 = st.columns(2)
+        with cta1:
+            if st.button("Check a Message Now", key="dash_cta_msg", type="primary", use_container_width=True):
+                st.session_state.active_nav = "nav_message_checker"
+                st.rerun()
+        with cta2:
+            if st.button("Inspect a Web Link", key="dash_cta_url", use_container_width=True):
+                st.session_state.active_nav = "nav_url_checker"
+                st.rerun()
+
+    st.markdown(f"<h2 style='font-size:18px; margin-top:20px; margin-bottom:12px;'>{t('dash_actions_heading', lang)}</h2>", unsafe_allow_html=True)
+    
+    card_row1_col1, card_row1_col2 = st.columns(2)
+    
+    with card_row1_col1:
+        st.markdown(f"""
+        <div class="ss-card" style="border-top:3.5px solid #7653B5; min-height:165px; display:flex; flex-direction:column; justify-content:space-between;">
+          <div>
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+              {ICONS['message']}
+              <h3 style="margin:0; font-size:15px; color:#49316F;">{t('dash_action_msg_title', lang)}</h3>
+            </div>
+            <p style="color:#777185; font-size:13px; margin:0 0 12px 0; line-height:1.45;">
+              Scan suspicious WhatsApp texts, bank alerts, electricity notices, or lottery claims using machine learning. Get instant explanations and safety advice.
+            </p>
+          </div>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button(t("dash_action_msg_btn", lang), key="btn_dash_msg_explore", type="primary", use_container_width=True):
+            st.session_state.active_nav = "nav_message_checker"
+            st.rerun()
+
+    with card_row1_col2:
+        st.markdown(f"""
+        <div class="ss-card" style="border-top:3.5px solid #49316F; min-height:165px; display:flex; flex-direction:column; justify-content:space-between;">
+          <div>
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+              {ICONS['globe']}
+              <h3 style="margin:0; font-size:15px; color:#49316F;">{t('dash_action_url_title', lang)}</h3>
+            </div>
+            <p style="color:#777185; font-size:13px; margin:0 0 12px 0; line-height:1.45;">
+              Inspect unfamiliar links and web addresses before you click. Detect lookalike phishing domains, deceptive IP URLs, brand impersonation, and hidden redirects.
+            </p>
+          </div>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button(t("dash_action_url_btn", lang), key="btn_dash_url_explore", use_container_width=True):
+            st.session_state.active_nav = "nav_url_checker"
+            st.rerun()
+
+    card_row2_col1, card_row2_col2 = st.columns(2)
+
+    with card_row2_col1:
+        st.markdown(f"""
+        <div class="ss-card" style="border-top:3.5px solid #0D9488; min-height:165px; display:flex; flex-direction:column; justify-content:space-between;">
+          <div>
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+              {ICONS['shield_check']}
+              <h3 style="margin:0; font-size:15px; color:#0D9488;">{t('dash_action_aware_title', lang)}</h3>
+            </div>
+            <p style="color:#777185; font-size:13px; margin:0 0 12px 0; line-height:1.45;">
+              Explore real-world case studies of digital arrest calls, fake KYC updates, lottery prize traps, and task frauds. Learn simple defenses to stay completely secure.
+            </p>
+          </div>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("Explore Awareness", key="btn_dash_aware_explore", use_container_width=True):
+            st.session_state.active_nav = "nav_awareness"
+            st.rerun()
+
+    with card_row2_col2:
+        st.markdown(f"""
+        <div class="ss-card" style="border-top:3.5px solid #DC2626; min-height:165px; display:flex; flex-direction:column; justify-content:space-between;">
+          <div>
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+              {ICONS['book']}
+              <h3 style="margin:0; font-size:15px; color:#DC2626;">Elderly Safety Guide & Quiz</h3>
+            </div>
+            <p style="color:#777185; font-size:13px; margin:0 0 12px 0; line-height:1.45;">
+              Learn practical emergency protocols if an OTP was shared or money was sent. Test your fraud detection readiness with an interactive 4-question scam quiz.
+            </p>
+          </div>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("Explore Safety Guide", key="btn_dash_guide_explore", use_container_width=True):
+            st.session_state.active_nav = "nav_safety_guide"
+            st.rerun()
+
+    tip_idx = st.session_state.daily_tip_idx % len(DAILY_SAFETY_TIPS)
+    current_tip = DAILY_SAFETY_TIPS[tip_idx].get(lang, DAILY_SAFETY_TIPS[tip_idx]["English"])
+
+    st.markdown(f"""
+    <div class="ss-card" style="background:#FAF7FF; border:1px solid #D8CBEF; margin-top:14px;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+        {ICONS['bulb']}
+        <span style="font-size:11px; font-weight:700; color:#7653B5; text-transform:uppercase; letter-spacing:0.4px;">
+          {t('dash_tip_badge', lang)}
+        </span>
+      </div>
+      <p style="font-weight:600; font-size:14px; margin:0; color:#49316F; line-height:1.5;">
+        {current_tip}
+      </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    if st.button(t("dash_tip_next_btn", lang), key="btn_next_tip"):
+        st.session_state.daily_tip_idx = (st.session_state.daily_tip_idx + 1) % len(DAILY_SAFETY_TIPS)
+        st.rerun()
+
+    st.markdown(f"<h2 style='font-size:17px; margin-top:20px; margin-bottom:12px;'>{t('dash_rules_heading', lang)}</h2>", unsafe_allow_html=True)
+    r1, r2, r3 = st.columns(3)
+    with r1:
+        st.markdown(f"""
+        <div class="ss-card" style="border-top:3px solid #DC2626; text-align:center; min-height:145px;">
+          <div style="display:flex; justify-content:center; margin-bottom:6px;">{ICONS['lock']}</div>
+          <span style="font-size:11px; font-weight:700; color:#DC2626; letter-spacing:0.4px;">RULE 1</span>
+          <h3 style="margin:4px 0; font-size:14px; color:#49316F;">{t('rule_1_title', lang)}</h3>
+          <p style="font-size:12.5px; color:#777185; margin:0; line-height:1.45;">{t('rule_1_desc', lang)}</p>
+        </div>
+        """, unsafe_allow_html=True)
+    with r2:
+        st.markdown(f"""
+        <div class="ss-card" style="border-top:3px solid #D97706; text-align:center; min-height:145px;">
+          <div style="display:flex; justify-content:center; margin-bottom:6px;">{ICONS['alert_triangle']}</div>
+          <span style="font-size:11px; font-weight:700; color:#D97706; letter-spacing:0.4px;">RULE 2</span>
+          <h3 style="margin:4px 0; font-size:14px; color:#49316F;">{t('rule_2_title', lang)}</h3>
+          <p style="font-size:12.5px; color:#777185; margin:0; line-height:1.45;">{t('rule_2_desc', lang)}</p>
+        </div>
+        """, unsafe_allow_html=True)
+    with r3:
+        st.markdown(f"""
+        <div class="ss-card" style="border-top:3px solid #10B981; text-align:center; min-height:145px;">
+          <div style="display:flex; justify-content:center; margin-bottom:6px;">{ICONS['user_caregiver']}</div>
+          <span style="font-size:11px; font-weight:700; color:#10B981; letter-spacing:0.4px;">RULE 3</span>
+          <h3 style="margin:4px 0; font-size:14px; color:#49316F;">{t('rule_3_title', lang)}</h3>
+          <p style="font-size:12.5px; color:#777185; margin:0; line-height:1.45;">{t('rule_3_desc', lang)}</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    render_helpline_banner(lang, current_fs)
+
+
+elif st.session_state.active_nav == "nav_message_checker":
+    st.markdown(f"""
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:2px;">
+      {ICONS['message']}
+      <h1 style="margin:0; font-size:22px; color:#49316F;">{t('msg_title', lang)}</h1>
+    </div>
+    <p style="color:#777185; font-size:13.5px; margin-bottom:14px;">{t('msg_subtitle', lang)}</p>
+    """, unsafe_allow_html=True)
+
+    st.markdown(f"<span style='font-size:12px; font-weight:700; color:#777185;'>{t('msg_sample_label', lang)}</span>", unsafe_allow_html=True)
+    sample_cols = st.columns(3)
+    samples = [
+        ("Bank KYC Threat", "URGENT: Your SBI netbanking account is suspended due to expired KYC. Update immediately at http://bit.ly/sbi-kyc-verify to prevent permanent block."),
+        ("Electricity Cutoff", "Dear consumer, your electricity connection will be disconnected tonight at 9:30 PM because previous bill was unpaid. Call power officer immediately at 9876543210."),
+        ("Legitimate Family", "Hi Grandma, reached home safely from college. Dad said we will go out for dinner together at 8 PM!"),
+    ]
+    for i, (s_label, s_text) in enumerate(samples):
+        with sample_cols[i]:
+            if st.button(s_label, key=f"smp_{i}", use_container_width=True):
+                st.session_state.message_input = s_text
+                st.rerun()
+
+    user_msg = st.text_area(
+        t("msg_input_label", lang),
+        value=st.session_state.message_input,
+        placeholder=t("msg_placeholder", lang),
+        key="main_msg_textarea",
+        height=95
+    )
+
+    btn_c1, btn_c2 = st.columns([4, 1])
+    with btn_c1:
+        analyze_clicked = st.button(t("msg_btn_analyze", lang), type="primary", use_container_width=True)
+    with btn_c2:
+        clear_clicked = st.button(t("msg_btn_clear", lang), use_container_width=True)
+
+    if clear_clicked:
+        st.session_state.message_input = ""
+        st.session_state.last_message_result = None
+        st.rerun()
+
+    if analyze_clicked:
+        if not user_msg.strip():
+            st.warning(t("msg_input_required", lang))
+        else:
+            with st.spinner(t("msg_analyzing", lang)):
+                result = run_integrated_analysis(user_msg)
+                st.session_state.last_message_result = result
+                
+                log_analysis_history(
+                    input_type="Message",
+                    content=user_msg.strip(),
+                    risk_level=result.get("overall_risk_level", "SAFE"),
+                    score=result.get("risk_score", 0.0)
+                )
+
+    res = st.session_state.last_message_result
+    if res:
+        st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
+        st.markdown(f"<h2 style='font-size:18px; color:#49316F;'>{t('msg_results_heading', lang)}</h2>", unsafe_allow_html=True)
+
+        overall_risk = res.get("overall_risk_level", "SAFE")
+        warning = res.get("warning", "")
+        risk_score = res.get("risk_score", 0.0)
+        prediction = res.get("message_prediction", "UNKNOWN")
+        confidence = res.get("message_confidence")
+        explanation = res.get("explanation", "")
+        indicators = res.get("risk_indicators", [])
+        actions = res.get("recommended_actions", [])
+
+        render_risk_card(overall_risk, warning, risk_score, lang=lang, font_size=current_fs)
+
+        narration_text = f"{translate_warning(warning, lang)}. " + " ".join(translate_action(a, lang) for a in actions[:3])
+        render_audio_narrator(narration_text, lang_code, button_label=t("msg_btn_narrate", lang), font_size=current_fs)
+
+        m1, m2, m3 = st.columns(3)
+        with m1:
+            st.markdown(f"""
+            <div class="ss-card" style="padding:12px; text-align:center;">
+              <span style="font-size:11px; font-weight:700; color:#777185; text-transform:uppercase; letter-spacing:0.3px;">{t('res_prediction', lang)}</span>
+              <div style="font-size:16px; font-weight:800; color:#7653B5; margin-top:3px;">
+                {translate_prediction(prediction, lang)}
+              </div>
+            </div>
+            """, unsafe_allow_html=True)
+        with m2:
+            conf_str = f"{int(confidence * 100)}%" if confidence is not None else "N/A"
+            st.markdown(f"""
+            <div class="ss-card" style="padding:12px; text-align:center;">
+              <span style="font-size:11px; font-weight:700; color:#777185; text-transform:uppercase; letter-spacing:0.3px;">{t('res_confidence', lang)}</span>
+              <div style="font-size:16px; font-weight:800; color:#49316F; margin-top:3px;">
+                {conf_str}
+              </div>
+            </div>
+            """, unsafe_allow_html=True)
+        with m3:
+            st.markdown(f"""
+            <div class="ss-card" style="padding:12px; text-align:center;">
+              <span style="font-size:11px; font-weight:700; color:#777185; text-transform:uppercase; letter-spacing:0.3px;">{t('res_risk_score', lang)}</span>
+              <div style="font-size:16px; font-weight:800; color:#B45309; margin-top:3px;">
+                {round(risk_score, 2)} / 1.00
+              </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        localized_exp = translate_explanation(explanation, lang=lang, prediction=prediction)
+        st.markdown(f"""
+        <div class="ss-card" style="border-left:3.5px solid #7653B5; background:#FAF7FF;">
+          <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+            {ICONS['brain']}
+            <h3 style="margin:0; color:#49316F !important; font-size:14px;">{t('res_explanation_title', lang)}</h3>
+          </div>
+          <p style="margin:0; font-size:13.5px; line-height:1.55; color:#292438;">
+            {localized_exp}
+          </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        ind_col, act_col = st.columns(2)
+        with ind_col:
+            st.markdown(f"<h3 style='font-size:15px; color:#49316F;'>{t('res_indicators_title', lang)}</h3>", unsafe_allow_html=True)
+            render_threat_indicators(indicators, lang=lang)
+
+        with act_col:
+            st.markdown(f"<h3 style='font-size:15px; color:#49316F;'>{t('res_actions_title', lang)}</h3>", unsafe_allow_html=True)
+            render_safety_actions(actions, lang=lang)
+
+        render_caregiver_share(
+            helper_name=st.session_state.helper_name,
+            helper_phone=st.session_state.helper_phone,
+            message_text=user_msg,
+            risk_level=overall_risk,
+            warning_text=translate_warning(warning, lang),
+            lang=lang
+        )
+
+
+elif st.session_state.active_nav == "nav_url_checker":
+    st.markdown(f"""
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:2px;">
+      {ICONS['globe']}
+      <h1 style="margin:0; font-size:22px; color:#49316F;">{t('url_title', lang)}</h1>
+    </div>
+    <p style="color:#777185; font-size:13.5px; margin-bottom:14px;">{t('url_subtitle', lang)}</p>
+    """, unsafe_allow_html=True)
+
+    st.markdown(f"<span style='font-size:12px; font-weight:700; color:#777185;'>{t('url_sample_label', lang)}</span>", unsafe_allow_html=True)
+    u_cols = st.columns(3)
+    u_samples = [
+        ("Fake Bank Site", "http://sbi-kyc-verification.top/login.php"),
+        ("Shortened Link", "http://bit.ly/claim-lottery-gift"),
+        ("Official Portal", "https://onlinesbi.sbi"),
+    ]
+    for i, (u_lbl, u_val) in enumerate(u_samples):
+        with u_cols[i]:
+            if st.button(u_lbl, key=f"usmp_{i}", use_container_width=True):
+                st.session_state.url_input = u_val
+                st.rerun()
+
+    user_url = st.text_input(
+        t("url_input_label", lang),
+        value=st.session_state.url_input,
+        placeholder="https://example.com/verify-account",
+        key="main_url_input"
+    )
+
+    u_btn_c1, u_btn_c2 = st.columns([4, 1])
+    with u_btn_c1:
+        u_analyze_clicked = st.button(t("url_btn_analyze", lang), type="primary", use_container_width=True)
+    with u_btn_c2:
+        u_clear_clicked = st.button(t("msg_btn_clear", lang), key="u_clear", use_container_width=True)
+
+    if u_clear_clicked:
+        st.session_state.url_input = ""
+        st.session_state.last_url_result = None
+        st.rerun()
+
+    if u_analyze_clicked:
+        if not user_url.strip():
+            st.warning(t("url_input_required", lang))
+        else:
+            with st.spinner(t("url_analyzing", lang)):
+                url_res = run_standalone_url_analysis(user_url.strip())
+                st.session_state.last_url_result = url_res
+                
+                risk_lvl = "HIGH" if url_res.get("risk_score", 0) >= 3 else ("MEDIUM" if url_res.get("suspicious") else "LOW")
+                log_analysis_history(
+                    input_type="URL",
+                    content=user_url.strip(),
+                    risk_level=risk_lvl,
+                    score=min(1.0, url_res.get("risk_score", 0) / 4.0)
+                )
+
+    u_res = st.session_state.last_url_result
+    if u_res:
+        st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
+        st.markdown(f"<h2 style='font-size:18px; color:#49316F;'>{t('url_res_heading', lang)}</h2>", unsafe_allow_html=True)
+
+        is_suspicious = u_res.get("suspicious", False)
+        risk_score = u_res.get("risk_score", 0)
+        analyzed_url = u_res.get("url", "")
+        url_indicators = u_res.get("risk_indicators", [])
+        explanation = u_res.get("explanation", "")
+
+        if risk_score >= 3:
+            url_level = "HIGH"
+            level_banner_class = "alert-high"
+            level_text = translate_url_risk("MALICIOUS", lang)
+        elif is_suspicious or risk_score >= 1:
+            url_level = "MEDIUM"
+            level_banner_class = "alert-med"
+            level_text = translate_url_risk("SUSPICIOUS", lang)
+        else:
+            url_level = "LOW"
+            level_banner_class = "alert-low"
+            level_text = translate_url_risk("SAFE", lang)
+
+        st.markdown(f"""
+        <div class="{level_banner_class}">
+          <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              {ICONS['globe']}
+              <div>
+                <h2 style="margin:0; font-size:17px;">{level_text}</h2>
+                <span style="font-size:13px; color:#49316F;">Target: {analyzed_url}</span>
+              </div>
+            </div>
+            <div style="padding:4px 10px; border-radius:14px; background:rgba(0,0,0,0.06); font-weight:700; font-size:12px;">
+              Risk Points: {risk_score}
+            </div>
+          </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        loc_explanation = translate_explanation(explanation, lang=lang, prediction="scam" if risk_score >= 1 else "safe")
+        render_audio_narrator(f"{level_text}. {loc_explanation}", lang_code, button_label=t("msg_btn_narrate", lang), font_size=current_fs)
+
+        col_u1, col_u2 = st.columns(2)
+        with col_u1:
+            st.markdown(f"<h3 style='font-size:15px; color:#49316F;'>{t('url_res_indicators', lang)}</h3>", unsafe_allow_html=True)
+            if url_indicators:
+                for u_ind in url_indicators:
+                    loc_u_ind = translate_indicator(u_ind, lang)
+                    st.markdown(f"""
+                    <div class="ss-indicator-box">
+                      <span style="flex-shrink:0;">{ICONS['alert_triangle']}</span>
+                      <span>{loc_u_ind}</span>
+                    </div>
+                    """, unsafe_allow_html=True)
+            else:
+                st.markdown(f"""
+                <div class="ss-action-box">
+                  <span style="flex-shrink:0;">{ICONS['check_circle']}</span>
+                  <span>{t('res_no_indicators', lang)}</span>
+                </div>
+                """, unsafe_allow_html=True)
+
+        with col_u2:
+            st.markdown(f"<h3 style='font-size:15px; color:#49316F;'>{t('url_res_explanation', lang)}</h3>", unsafe_allow_html=True)
+            st.markdown(f"""
+            <div class="ss-card" style="border-left:3.5px solid #7653B5; font-size:13.5px; line-height:1.55; background:#FAF7FF;">
+              <p style="margin:0; color:#292438;">{loc_explanation}</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+
+elif st.session_state.active_nav == "nav_awareness":
+    st.markdown(f"""
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:2px;">
+      {ICONS['shield_check']}
+      <h1 style="margin:0; font-size:22px; color:#49316F;">{t('aware_title', lang)}</h1>
+    </div>
+    <p style="color:#777185; font-size:13.5px; margin-bottom:14px;">{t('aware_subtitle', lang)}</p>
+    """, unsafe_allow_html=True)
+
+    aware_items = [
+        ("scam_otp_title", "scam_otp_desc", "#DC2626", ICONS['lock']),
+        ("scam_bank_title", "scam_bank_desc", "#D97706", ICONS['alert_triangle']),
+        ("scam_lottery_title", "scam_lottery_desc", "#7653B5", ICONS['bulb']),
+        ("scam_digital_arrest_title", "scam_digital_arrest_desc", "#49316F", ICONS['phone_call']),
     ]
 
-    st.markdown(f"<h3 style='margin-bottom:12px;'>Common questions — tap to ask:</h3>", unsafe_allow_html=True)
-    for i, sq in enumerate(sample_questions):
-        if st.button(sq, key=f"sq_{i}", use_container_width=True):
-            st.session_state.bot_input = sq
+    a_c1, a_c2 = st.columns(2)
+    for idx, (t_key, d_key, color, icon) in enumerate(aware_items):
+        target = a_c1 if idx % 2 == 0 else a_c2
+        with target:
+            st.markdown(f"""
+            <div class="ss-card" style="border-top:3.5px solid {color}; min-height:140px;">
+              <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
+                {icon}
+                <h3 style="margin:0; font-size:15px; color:{color};">{t(t_key, lang)}</h3>
+              </div>
+              <p style="color:#777185; font-size:13px; margin:0; line-height:1.5;">
+                {t(d_key, lang)}
+              </p>
+            </div>
+            """, unsafe_allow_html=True)
 
-    user_query = st.text_input("Type or choose your question:", value=st.session_state.get("bot_input", ""))
 
-    if st.button("Ask Companion", type="primary"):
-        if not user_query.strip():
-            st.warning("Please enter a question.")
-        else:
-            q = user_query.lower()
-            if any(w in q for w in ["otp", "pin", "password"]):
-                ans = "Never share your OTP or PIN with anyone. Banks and police never ask for your secret code. If someone on a call is asking for it, hang up immediately and dial 1930."
-            elif any(w in q for w in ["electricity", "power", "bill"]):
-                ans = "This is a very common scam. Scammers send fake disconnection threats to create panic. Do not call numbers in the SMS. Pay your electricity bill only through your official electricity board app or office."
-            elif any(w in q for w in ["police", "cbi", "arrest", "video call"]):
-                ans = "This is the Digital Arrest scam. Police or judges never hold trials or ask for money over WhatsApp or video calls. Immediately disconnect the call and dial 1930."
-            elif any(w in q for w in ["anydesk", "teamviewer", "screen share"]):
-                ans = "Never install AnyDesk or TeamViewer if a stranger asks you to. These apps let fraudsters see your screen, watch you enter passwords, and steal your money."
-            else:
-                ans = "Take your time. If a message or caller is asking for money, passwords, or threatening you, stop and show it to your trusted family member. You do not have to act in a rush."
+elif st.session_state.active_nav == "nav_safety_guide":
+    st.markdown(f"""
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:2px;">
+      {ICONS['book']}
+      <h1 style="margin:0; font-size:22px; color:#49316F;">{t('guide_title', lang)}</h1>
+    </div>
+    <p style="color:#777185; font-size:13.5px; margin-bottom:14px;">{t('guide_subtitle', lang)}</p>
+    """, unsafe_allow_html=True)
+
+    tab_guide_emer, tab_guide_quiz = st.tabs([
+        t("guide_tab_emergency", lang),
+        t("guide_tab_quiz", lang)
+    ])
+
+    with tab_guide_emer:
+        scenarios = [
+            (t("emer_step1_title", lang), t("emer_step1_desc", lang), "#7653B5"),
+            (t("emer_step2_title", lang), t("emer_step2_desc", lang), "#D97706"),
+            (t("emer_step3_title", lang), t("emer_step3_desc", lang), "#DC2626"),
+        ]
+        for s_title, s_desc, color in scenarios:
+            st.markdown(f"""
+            <div class="ss-card" style="border-left:3.5px solid {color}; margin-bottom:12px;">
+              <h3 style="color:{color} !important; margin:0 0 4px 0; font-size:14.5px;">{s_title}</h3>
+              <p style="margin:0; font-size:13px; white-space:pre-line; line-height:1.55; color:#292438;">
+                {s_desc}
+              </p>
+            </div>
+            """, unsafe_allow_html=True)
+        render_helpline_banner(lang, current_fs)
+
+    with tab_guide_quiz:
+        st.markdown(f"<h2 style='font-size:17px; color:#49316F;'>{t('quiz_title', lang)}</h2>", unsafe_allow_html=True)
+        
+        quiz_list = [
+            {
+                "id": "q1",
+                "q": t("quiz_q1", lang),
+                "options": [t("quiz_q1_o1", lang), t("quiz_q1_o2", lang), t("quiz_q1_o3", lang)],
+                "correct": 1,
+                "exp": t("quiz_q1_exp", lang)
+            },
+            {
+                "id": "q2",
+                "q": t("quiz_q2", lang),
+                "options": [t("quiz_q2_o1", lang), t("quiz_q2_o2", lang), t("quiz_q2_o3", lang)],
+                "correct": 1,
+                "exp": t("quiz_q2_exp", lang)
+            },
+            {
+                "id": "q3",
+                "q": t("quiz_q3", lang),
+                "options": [t("quiz_q3_o1", lang), t("quiz_q3_o2", lang), t("quiz_q3_o3", lang)],
+                "correct": 1,
+                "exp": t("quiz_q3_exp", lang)
+            },
+        ]
+
+        q_score = 0
+        with st.form("quick_quiz_form"):
+            for q_idx, item in enumerate(quiz_list):
+                st.markdown(f"""
+                <div class="ss-quiz-card">
+                  <div style="font-weight:700; font-size:13.5px; margin-bottom:6px; color:#49316F;">
+                    {q_idx+1}. {item['q']}
+                  </div>
+                </div>
+                """, unsafe_allow_html=True)
+                ans = st.radio(
+                    f"Answer {q_idx+1}",
+                    item["options"],
+                    key=f"quiz_radio_{item['id']}",
+                    label_visibility="collapsed"
+                )
+                st.session_state.quiz_answers[item["id"]] = item["options"].index(ans)
+
+            quiz_submit = st.form_submit_button(t("quiz_btn_check", lang), type="primary")
+
+        if quiz_submit or st.session_state.quiz_submitted:
+            st.session_state.quiz_submitted = True
+            for item in quiz_list:
+                user_sel = st.session_state.quiz_answers.get(item["id"])
+                if user_sel == item["correct"]:
+                    q_score += 1
+                    st.markdown(f"""
+                    <div class="ss-quiz-correct">
+                      <b>Correct: {item['q']}</b><br/>
+                      <span style="color:#065F46;">{item['exp']}</span>
+                    </div>
+                    """, unsafe_allow_html=True)
+                else:
+                    st.markdown(f"""
+                    <div class="ss-quiz-incorrect">
+                      <b>Incorrect: {item['q']}</b><br/>
+                      <span style="color:#991B1B;">{item['exp']}</span>
+                    </div>
+                    """, unsafe_allow_html=True)
 
             st.markdown(f"""
-            <div class="ss-card" style="border-left:6px solid {accent};margin-top:14px;">
-              <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
-                {ICONS['bot']}
-                <h3 style="margin:0;">SilverShield Companion Answer</h3>
-              </div>
-              <p style="margin:0;font-size:clamp(14px,{fs}px,{fs+1}px);">{ans}</p>
-            </div>""", unsafe_allow_html=True)
-            render_audio_narrator(ans, current_lang_code)
+            <div class="ss-card" style="text-align:center; margin-top:14px; border-top:3.5px solid #7653B5;">
+              <h2 style="font-size:17px; margin:4px 0; color:#49316F;">{t('quiz_score_prefix', lang)} {q_score} / {len(quiz_list)}</h2>
+            </div>
+            """, unsafe_allow_html=True)
+
+            if st.button(t("quiz_btn_reset", lang)):
+                st.session_state.quiz_submitted = False
+                st.session_state.quiz_answers = {}
+                st.rerun()
 
 
-# ── SETTINGS ──
-elif page_key == "settings":
+elif st.session_state.active_nav == "nav_settings":
     st.markdown(f"""
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;flex-wrap:wrap;">
-      {ICONS['gear']}
-      <h1 style="margin:0;">{t['settings_title']}</h1>
-    </div>""", unsafe_allow_html=True)
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:2px;">
+      {ICONS['settings']}
+      <h1 style="margin:0; font-size:22px; color:#49316F;">{t('set_title', lang)}</h1>
+    </div>
+    <p style="color:#777185; font-size:13.5px; margin-bottom:14px;">{t('set_subtitle', lang)}</p>
+    """, unsafe_allow_html=True)
 
-    st.markdown(f"<h3 style='margin-top:22px;margin-bottom:12px;'>{t['font_size_label']}</h3>", unsafe_allow_html=True)
-    chosen_size = st.radio(
-        "Font Size",
-        ["Standard (18px)", "Large (22px)", "Extra Large (26px)"],
-        index=["Standard (18px)", "Large (22px)", "Extra Large (26px)"].index(st.session_state.font_size_choice)
-    )
-    if chosen_size != st.session_state.font_size_choice:
-        st.session_state.font_size_choice = chosen_size
-        st.rerun()
+    set_col1, set_col2 = st.columns(2)
 
-    st.divider()
-    st.markdown(f"<h3 style='margin-bottom:12px;'>{t['contrast_label']}</h3>", unsafe_allow_html=True)
-    hc_val = st.toggle("Enable High Contrast Mode (WCAG AAA)", value=st.session_state.high_contrast)
-    if hc_val != st.session_state.high_contrast:
-        st.session_state.high_contrast = hc_val
-        st.rerun()
+    with set_col1:
+        st.markdown(f"""
+        <div class="ss-card" style="border-top:3.5px solid #7653B5;">
+          <h3 style="margin-top:0; font-size:15px; color:#49316F;">Visual & Language Preferences</h3>
+        </div>
+        """, unsafe_allow_html=True)
 
-    st.divider()
-    if st.button(t["restore_defaults"]):
-        st.session_state.font_size_choice = "Large (22px)"
-        st.session_state.high_contrast    = False
-        st.session_state.language         = "English"
-        st.rerun()
+        st.markdown(f"<span style='font-size:12px; font-weight:700; color:#49316F; text-transform:uppercase;'>{t('sidebar_language_label', lang)}</span>", unsafe_allow_html=True)
+        lang_options = ["English", "Hindi", "Kannada"]
+        lang_labels = {"English": "English", "Hindi": "हिन्दी (Hindi)", "Kannada": "ಕನ್ನಡ (Kannada)"}
+        selected_lang = st.selectbox(
+            "Language Selector",
+            lang_options,
+            index=lang_options.index(st.session_state.language),
+            format_func=lambda x: lang_labels.get(x, x),
+            key="set_lang_selectbox"
+        )
+        if selected_lang != st.session_state.language:
+            st.session_state.language = selected_lang
+            st.rerun()
+
+        st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
+
+        st.markdown(f"<span style='font-size:12px; font-weight:700; color:#49316F; text-transform:uppercase;'>{t('set_font_size_label', lang)}</span>", unsafe_allow_html=True)
+        fs_choices = ["Compact (14px)", "Standard (15px)", "Large (17px)"]
+        chosen_fs = st.radio(
+            "Font Size Selection",
+            fs_choices,
+            index=fs_choices.index(st.session_state.font_size_choice) if st.session_state.font_size_choice in fs_choices else 1,
+            key="set_fs_radio"
+        )
+        if chosen_fs != st.session_state.font_size_choice:
+            st.session_state.font_size_choice = chosen_fs
+            st.rerun()
+
+        st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
+
+        st.markdown(f"<span style='font-size:12px; font-weight:700; color:#49316F; text-transform:uppercase;'>{t('set_contrast_label', lang)}</span>", unsafe_allow_html=True)
+        hc_val = st.toggle("WCAG AAA High Contrast", value=st.session_state.high_contrast, key="set_hc_toggle")
+        if hc_val != st.session_state.high_contrast:
+            st.session_state.high_contrast = hc_val
+            st.rerun()
+
+        st.markdown("<div style='height:16px;'></div>", unsafe_allow_html=True)
+
+        st.markdown(f"""
+        <div class="ss-card" style="border-top:3.5px solid #10B981;">
+          <h3 style="margin-top:0; font-size:15px; color:#49316F;">Account & Authentication Status</h3>
+          <p style="font-size:12.5px; color:#777185; margin:0 0 10px 0;">
+            {"Logged in: " + st.session_state.auth_user.get('email', '') if st.session_state.auth_user else "Running in Secure Guest Mode. Create an account to sync caregiver and consent settings."}
+          </p>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("Manage Account & Security" if st.session_state.auth_user else "Sign In / Create Account", key="btn_go_account_from_settings", type="primary", use_container_width=True):
+            st.session_state.active_nav = "nav_account"
+            st.rerun()
+
+    with set_col2:
+        st.markdown(f"""
+        <div class="ss-card" style="border-top:3.5px solid #49316F;">
+          <h3 style="margin-top:0; font-size:15px; color:#49316F;">{t('set_helper_heading', lang)}</h3>
+          <p style="font-size:12.5px; color:#777185; margin:0 0 10px 0;">{t('set_helper_desc', lang)}</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        with st.form("full_helper_form"):
+            h_name = st.text_input(t("set_helper_name", lang), value=st.session_state.helper_name, placeholder="e.g. Ramesh / Priya")
+            h_phone = st.text_input(t("set_helper_phone", lang), value=st.session_state.helper_phone, placeholder="919876543210")
+            if st.form_submit_button(t("set_helper_save_btn", lang), type="primary"):
+                st.session_state.helper_name = h_name.strip()
+                st.session_state.helper_phone = re.sub(r"[^\d]", "", h_phone.strip())
+                st.success(t("set_helper_saved_msg", lang))
+
+        st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
+
+        st.markdown(f"""
+        <div class="ss-card" style="border-top:3.5px solid #0D9488;">
+          <h3 style="margin-top:0; font-size:15px; color:#0D9488;">{t('set_history_heading', lang)}</h3>
+          <p style="font-size:12.5px; color:#777185; margin:0 0 8px 0;">{t('set_history_desc', lang)}</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        hist = st.session_state.analysis_history
+        if hist:
+            for h_item in hist[:6]:
+                st.markdown(f"""
+                <div style='font-size:12.5px; padding:6px 8px; border-bottom:1px solid #E6E0EF; display:flex; justify-content:space-between;'>
+                  <span><b>[{h_item['type']}]</b> {h_item['preview']}</span>
+                  <span style='color:#7653B5; font-weight:700;'>{h_item['risk_level']}</span>
+                </div>
+                """, unsafe_allow_html=True)
+            if st.button(t("set_history_clear_btn", lang), key="btn_clear_hist_full"):
+                st.session_state.analysis_history = []
+                st.rerun()
+        else:
+            st.caption(t("set_history_empty", lang))
+
+        render_helpline_banner(lang, current_fs)
+
+
+elif st.session_state.active_nav == "nav_account":
+    from app.database import authenticate_user, register_user, get_consent_record, save_consent_update, update_caregiver
+    from security.auth_rules import validate_password_strength, invalidate_token
+    from security.consent import get_elderly_transparency_notices
+
+    st.markdown(f"""
+    <div class="ss-welcome-card" style="border-left: 4px solid #7653B5;">
+      <h2 style="color:#49316F !important; margin:0 0 6px 0; font-size:20px;">
+        {t('nav_account', lang)} — Senior & Family Security Center
+      </h2>
+      <p style="color:#292438 !important; font-size:13.5px; margin:0;">
+        Powered by OWASP-recommended Argon2id memory-hard password verification, sliding-window rate limiting, and granular privacy consent.
+      </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    if st.session_state.auth_user is not None:
+        user = st.session_state.auth_user
+        acc_col1, acc_col2 = st.columns([1, 1])
+
+        with acc_col1:
+            st.markdown(f"""
+            <div class="ss-card" style="border-top:3.5px solid #10B981;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h3 style="margin:0; font-size:16px; color:#49316F;">Profile & Session State</h3>
+                <span class="ss-badge ss-badge-teal">Active Session</span>
+              </div>
+              <div style="margin-top:12px; font-size:13.5px; line-height:1.8;">
+                <div><b>Email:</b> {user.get('email')}</div>
+                <div><b>User ID:</b> <code>{user.get('id')}</code></div>
+                <div><b>Account Role:</b> {str(user.get('role', 'senior')).capitalize()}</div>
+                <div><b>Authentication:</b> <span style="color:#0D9488; font-weight:600;">Argon2id (64MB Hardened)</span></div>
+                <div><b>Token Security:</b> <span style="color:#7653B5; font-weight:600;">JWT HMAC-SHA256</span></div>
+              </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
+            if st.button("Log Out of Session", key="btn_auth_logout", type="secondary", use_container_width=True):
+                if st.session_state.auth_token:
+                    invalidate_token(st.session_state.auth_token)
+                st.session_state.auth_token = ""
+                st.session_state.auth_user = None
+                st.success("You have been securely logged out.")
+                st.rerun()
+
+        with acc_col2:
+            st.markdown(f"""
+            <div class="ss-card" style="border-top:3.5px solid #7653B5;">
+              <h3 style="margin-top:0; font-size:16px; color:#49316F;">Caregiver & Family Contact</h3>
+              <p style="font-size:13px; color:#777185; margin:0 0 10px 0;">
+                Designated contact for emergency notifications and scam alerts.
+              </p>
+            </div>
+            """, unsafe_allow_html=True)
+
+            with st.form("account_caregiver_form"):
+                acc_c_name = st.text_input("Caregiver Name", value=user.get("helper_name") or st.session_state.helper_name, placeholder="e.g. Ramesh")
+                acc_c_phone = st.text_input("Caregiver Phone (with country code)", value=user.get("helper_phone") or st.session_state.helper_phone, placeholder="919876543210")
+                if st.form_submit_button("Save Caregiver Details", type="primary"):
+                    clean_phone = re.sub(r"[^\d]", "", acc_c_phone.strip())
+                    update_caregiver(user["id"], acc_c_name.strip(), clean_phone)
+                    st.session_state.helper_name = acc_c_name.strip()
+                    st.session_state.helper_phone = clean_phone
+                    user["helper_name"] = acc_c_name.strip()
+                    user["helper_phone"] = clean_phone
+                    st.session_state.auth_user = user
+                    st.success("Caregiver information updated securely.")
+
+        st.markdown("<div style='height:16px;'></div>", unsafe_allow_html=True)
+        st.markdown(f"""
+        <div class="ss-card" style="border-top:3.5px solid #0D9488;">
+          <h3 style="margin-top:0; font-size:16px; color:#49316F;">Granular Privacy & Consent Controls</h3>
+          <p style="font-size:13px; color:#777185; margin:0 0 12px 0;">
+            Manage how your safety scans and data are handled in full compliance with DPDP & GDPR data rights.
+          </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        user_consent = get_consent_record(user["id"])
+        c_prefs = user_consent.preferences
+
+        with st.form("account_consent_form"):
+            c1_val = st.checkbox("Immediate In-Memory Message Analysis (Essential for scam detection)", value=c_prefs.consent_message_analysis)
+            c2_val = st.checkbox("Save Scan Risk Ratings (Stores only risk ratings; never stores your raw SMS or message text)", value=c_prefs.consent_save_history)
+            c3_val = st.checkbox("Share Anonymous Threat Signals (Aggregated statistics to improve safety defenses)", value=c_prefs.consent_analytics)
+            c4_val = st.checkbox("Designated Caregiver Sharing (Send high-risk alert details to your caregiver)", value=c_prefs.consent_caregiver_sharing)
+
+            if st.form_submit_button("Update Consent Preferences", type="primary"):
+                updated_consent = save_consent_update(
+                    user["id"],
+                    {
+                        "consent_message_analysis": c1_val,
+                        "consent_save_history": c2_val,
+                        "consent_analytics": c3_val,
+                        "consent_caregiver_sharing": c4_val,
+                    }
+                )
+                st.success("Consent preferences updated and logged in privacy audit trail.")
+                st.rerun()
+
+    else:
+        auth_tab_login, auth_tab_register, auth_tab_privacy = st.tabs(["Sign In", "Create Account", "Privacy Rights & Disclosures"])
+
+        with auth_tab_login:
+            st.markdown(f"""
+            <div class="ss-card" style="border-top:3.5px solid #7653B5; max-width:560px; margin:10px auto;">
+              <h3 style="margin:0 0 8px 0; color:#49316F; font-size:17px;">Sign In to SilverShield AI</h3>
+              <p style="font-size:13px; color:#777185; margin:0 0 14px 0;">
+                Access your personalized safety settings, saved caregiver alert contacts, and privacy preferences.
+              </p>
+            </div>
+            """, unsafe_allow_html=True)
+
+            with st.form("auth_login_form"):
+                log_email = st.text_input("Email Address", placeholder="senior@example.com")
+                log_pass = st.text_input("Password", type="password", placeholder="Enter your password")
+                submit_login = st.form_submit_button("Sign In", type="primary", use_container_width=True)
+
+                if submit_login:
+                    u, err = authenticate_user(log_email.strip(), log_pass)
+                    if err:
+                        st.error(err)
+                    else:
+                        from security.auth_rules import create_token
+                        token = create_token(subject=u["id"], secret_key="silvershield_ai_jwt_production_secret_key_minimum_32_bytes")
+                        st.session_state.auth_token = token
+                        st.session_state.auth_user = u
+                        if u.get("helper_name"):
+                            st.session_state.helper_name = u["helper_name"]
+                        if u.get("helper_phone"):
+                            st.session_state.helper_phone = u["helper_phone"]
+                        st.success("Successfully logged in! Session secured.")
+                        st.rerun()
+
+        with auth_tab_register:
+            st.markdown(f"""
+            <div class="ss-card" style="border-top:3.5px solid #10B981; max-width:560px; margin:10px auto;">
+              <h3 style="margin:0 0 8px 0; color:#49316F; font-size:17px;">Create a New Safety Account</h3>
+              <p style="font-size:13px; color:#777185; margin:0 0 14px 0;">
+                Your password is protected using memory-hard Argon2id hashing with unique random salts.
+              </p>
+            </div>
+            """, unsafe_allow_html=True)
+
+            with st.form("auth_register_form"):
+                reg_email = st.text_input("Email Address", placeholder="senior@example.com")
+                reg_pass = st.text_input("Password (min 8 characters, letters and numbers)", type="password", placeholder="Create a strong password")
+                reg_role = st.selectbox("I am a:", ["Senior Citizen", "Family Caregiver / Relative"])
+                submit_register = st.form_submit_button("Create Account", type="primary", use_container_width=True)
+
+                if submit_register:
+                    role_key = "caregiver" if "Caregiver" in reg_role else "senior"
+                    u, err = register_user(reg_email.strip(), reg_pass, role=role_key)
+                    if err:
+                        st.error(err)
+                    else:
+                        from security.auth_rules import create_token
+                        token = create_token(subject=u["id"], secret_key="silvershield_ai_jwt_production_secret_key_minimum_32_bytes")
+                        st.session_state.auth_token = token
+                        st.session_state.auth_user = u
+                        st.success("Account created successfully! Session is now active.")
+                        st.rerun()
+
+        with auth_tab_privacy:
+            st.markdown(f"""
+            <div class="ss-card" style="border-top:3.5px solid #0D9488; margin-top:10px;">
+              <h3 style="margin:0 0 8px 0; color:#0D9488; font-size:16px;">Plain-Language Elderly Privacy Disclosures</h3>
+              <p style="font-size:13px; color:#777185; margin:0 0 12px 0;">
+                SilverShield AI adheres to strict Privacy-by-Design and elderly-friendly transparency standards.
+              </p>
+            </div>
+            """, unsafe_allow_html=True)
+
+            from security.consent import ConsentPreferences, get_elderly_transparency_notices
+            notices = get_elderly_transparency_notices(ConsentPreferences())
+            for n in notices:
+                st.markdown(f"""
+                <div style="background:#FFFFFF; border:1px solid #E6E0EF; border-radius:8px; padding:12px 14px; margin-bottom:8px;">
+                  <div style="font-weight:700; color:#49316F; font-size:14px; margin-bottom:4px;">{n['title']}</div>
+                  <div style="color:#292438; font-size:13px; line-height:1.5;">{n['notice']}</div>
+                </div>
+                """, unsafe_allow_html=True)
+

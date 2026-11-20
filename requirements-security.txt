@@ -1,0 +1,16 @@
+# ==============================================================================
+# SECURE AI-POWERED ELDERLY DIGITAL SAFETY COMPANION
+# Member 2: Cybersecurity & Privacy Module Dependencies
+# ==============================================================================
+
+# Cryptographic password hashing (OWASP recommended Argon2id)
+argon2-cffi>=23.1.0
+
+# Signed session tokens & cryptographic verification
+PyJWT>=2.9.0
+
+# Server-side validation schemas
+pydantic>=2.8.0
+
+# Automated security test suite
+pytest>=8.0.0

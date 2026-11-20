@@ -1,0 +1,42 @@
+{
+  "Logistic Regression": {
+    "accuracy": 0.9806,
+    "precision_scam": 0.9091,
+    "recall_scam": 0.9375,
+    "f1_scam": 0.9231,
+    "macro_f1": 0.956,
+    "roc_auc": 0.9963,
+    "confusion_matrix": {
+      "true_negatives": 892,
+      "false_positives": 12,
+      "false_negatives": 8,
+      "true_positives": 120
+    },
+    "rates": {
+      "false_negative_rate": 0.0625,
+      "false_positive_rate": 0.0133
+    },
+    "cv_mean_accuracy": 0.9833,
+    "cv_mean_macro_f1": 0.9614
+  },
+  "Multinomial Naive Bayes": {
+    "accuracy": 0.9826,
+    "precision_scam": 0.9825,
+    "recall_scam": 0.875,
+    "f1_scam": 0.9256,
+    "macro_f1": 0.9579,
+    "roc_auc": 0.9892,
+    "confusion_matrix": {
+      "true_negatives": 902,
+      "false_positives": 2,
+      "false_negatives": 16,
+      "true_positives": 112
+    },
+    "rates": {
+      "false_negative_rate": 0.125,
+      "false_positive_rate": 0.0022
+    },
+    "cv_mean_accuracy": 0.9874,
+    "cv_mean_macro_f1": 0.9702
+  }
+}

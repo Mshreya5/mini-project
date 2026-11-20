@@ -1,0 +1,10 @@
+[project]
+name = "elderly-safety-risk-service"
+version = "1.0.0"
+description = "Risk aggregation and integration service for the elderly digital safety companion"
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "-q"
