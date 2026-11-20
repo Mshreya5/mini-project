@@ -4,6 +4,11 @@ import sys
 import time
 import requests
 
+try:
+    sys.stdout.reconfigure(line_buffering=True)
+except Exception:
+    pass
+
 os.environ["NO_PROXY"] = "localhost,127.0.0.1,*"
 os.environ["no_proxy"] = "localhost,127.0.0.1,*"
 
@@ -11,14 +16,19 @@ PYTHON = sys.executable
 
 
 def kill_proc(proc):
+    try:
+        proc.kill()
+    except Exception:
+        pass
     if sys.platform == "win32":
-        subprocess.run(f"taskkill /F /T /PID {proc.pid}", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    else:
-        proc.terminate()
         try:
-            proc.wait(timeout=2)
+            subprocess.run(["taskkill", "/F", "/T", "/PID", str(proc.pid)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=3)
         except Exception:
-            proc.kill()
+            pass
+    try:
+        proc.wait(timeout=3)
+    except Exception:
+        pass
 
 def test_live_system():
     print("=================================================================")
@@ -58,10 +68,14 @@ def test_live_system():
                 status_4 = type(e).__name__
 
             try:
-                r1 = requests.get("http://127.0.0.1:8501", timeout=1.0)
+                r1 = requests.get("http://127.0.0.1:8501/_stcore/health", timeout=3.0)
                 status_1 = f"HTTP {r1.status_code}"
-            except Exception as e:
-                status_1 = type(e).__name__
+            except Exception:
+                try:
+                    r1 = requests.get("http://127.0.0.1:8501", timeout=3.0)
+                    status_1 = f"HTTP {r1.status_code}"
+                except Exception as e:
+                    status_1 = type(e).__name__
 
             print(f"Attempt {attempt+1}: 8001: {status_2} | 8002: {status_3} | 8000: {status_4} | 8501: {status_1}", flush=True)
 
@@ -160,7 +174,12 @@ def test_live_system():
         print("\n--- TEST 8: ML Service Unavailable (Graceful Degradation) ---")
         print("Stopping Member 2 (ML API)...")
         kill_proc(p2)
-        time.sleep(1.0)
+        for _ in range(10):
+            try:
+                requests.get("http://127.0.0.1:8001/health", timeout=0.5)
+                time.sleep(0.5)
+            except Exception:
+                break
 
         r_degraded_ml = requests.post(backend_url, json={"message": "A normal test message while ML is down"}, timeout=6.0)
         assert r_degraded_ml.status_code == 200
@@ -174,7 +193,12 @@ def test_live_system():
         print("\n--- TEST 9: URL Service Unavailable (Graceful Degradation) ---")
         print("Stopping Member 3 (URL API)...")
         kill_proc(p3)
-        time.sleep(1.0)
+        for _ in range(10):
+            try:
+                requests.get("http://127.0.0.1:8002/health", timeout=0.5)
+                time.sleep(0.5)
+            except Exception:
+                break
 
         r_degraded_url = requests.post(backend_url, json={"message": "Check link http://example.com/test while URL service is down"}, timeout=6.0)
         assert r_degraded_url.status_code == 200

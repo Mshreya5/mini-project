@@ -506,29 +506,47 @@ def get_css(font_size: int = 15, high_contrast: bool = False) -> str:
         border: 1px solid #A7F3D0;
     }}
 
-    /* Threat Alert Banners */
+    /* Threat Alert Banners - Dynamically Colored Cards */
     .alert-high {{
-        background: {hi_bg};
-        border-left: 4px solid {hi_border};
-        border-radius: 8px;
-        padding: 12px 16px;
-        margin: 10px 0;
+        background: {hi_bg} !important;
+        border: 2px solid {hi_border} !important;
+        border-left: 6px solid {hi_border} !important;
+        border-radius: 12px !important;
+        padding: 16px 20px !important;
+        margin: 12px 0 !important;
+        color: {hi_txt} !important;
+        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.08) !important;
+    }}
+    .alert-high h2, .alert-high p, .alert-high span {{
+        color: {hi_txt} !important;
     }}
 
     .alert-med {{
-        background: {med_bg};
-        border-left: 4px solid {med_border};
-        border-radius: 8px;
-        padding: 12px 16px;
-        margin: 10px 0;
+        background: {med_bg} !important;
+        border: 2px solid {med_border} !important;
+        border-left: 6px solid {med_border} !important;
+        border-radius: 12px !important;
+        padding: 16px 20px !important;
+        margin: 12px 0 !important;
+        color: {med_txt} !important;
+        box-shadow: 0 2px 8px rgba(245, 158, 11, 0.08) !important;
+    }}
+    .alert-med h2, .alert-med p, .alert-med span {{
+        color: {med_txt} !important;
     }}
 
     .alert-low {{
-        background: {low_bg};
-        border-left: 4px solid {low_border};
-        border-radius: 8px;
-        padding: 12px 16px;
-        margin: 10px 0;
+        background: {low_bg} !important;
+        border: 2px solid {low_border} !important;
+        border-left: 6px solid {low_border} !important;
+        border-radius: 12px !important;
+        padding: 16px 20px !important;
+        margin: 12px 0 !important;
+        color: {low_txt} !important;
+        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.08) !important;
+    }}
+    .alert-low h2, .alert-low p, .alert-low span {{
+        color: {low_txt} !important;
     }}
 
     /* Threat Indicators & Action Items */
@@ -634,7 +652,7 @@ ICONS = {
     "lock": '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7653B5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
     "globe": '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7653B5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
     "message": '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7653B5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
-    "alert_triangle": '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+    "alert_triangle": '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
     "check_circle": '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
     "phone_call": '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.6 1.22h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.82a16 16 0 0 0 6.29 6.29l.96-.96a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>',
     "speaker": '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>',

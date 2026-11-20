@@ -190,6 +190,8 @@
     "personal_information": "SENSITIVE_INFO_REQUEST",
     "identity_document": "SENSITIVE_INFO_REQUEST",
     "kyc_update": "SENSITIVE_INFO_REQUEST",
+    "sensitive_info": "SENSITIVE_INFO_REQUEST",
+    "requests_sensitive_information_or_kyc_update": "SENSITIVE_INFO_REQUEST",
     "urgent_payment": "PAYMENT_REQUEST",
     "urgent_payment_request": "PAYMENT_REQUEST",
     "fake_prize": "PRIZE_BAIT",

@@ -8,3 +8,7 @@ font = "sans serif"
 
 [client]
 toolbarMode = "minimal"
+
+[secrets]
+files = [".streamlit/secrets.toml"]
+

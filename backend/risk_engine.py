@@ -33,7 +33,7 @@ class RiskAggregationEngine:
             "CREDENTIAL_HARVESTING"
         ),
         (
-            r"\b(account blocked|account suspended|deactivated|frozen|pan not updated|kyc expired|electricity will be disconnected)\b",
+            r"\b(account blocked|account suspended|deactivated|frozen|pan not updated|kyc expired|electricity will be disconnected|power will be disconnected|electricity power will be disconnected|bijli)\b",
             "Frightening threat of account blockage or utility disconnection",
             0.30,
             "INTIMIDATION_URGENCY"

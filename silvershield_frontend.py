@@ -454,25 +454,39 @@ elif st.session_state.active_nav == "nav_message_checker":
     <p style="color:#777185; font-size:13.5px; margin-bottom:14px;">{t('msg_subtitle', lang)}</p>
     """, unsafe_allow_html=True)
 
-    st.markdown(f"<span style='font-size:12px; font-weight:700; color:#777185;'>{t('msg_sample_label', lang)}</span>", unsafe_allow_html=True)
-    sample_cols = st.columns(3)
+    st.markdown(f"<span style='font-size:12.5px; font-weight:700; color:#49316F;'>{t('msg_sample_label', lang)}</span>", unsafe_allow_html=True)
+    
     samples = [
-        ("Bank KYC Threat", "URGENT: Your SBI netbanking account is suspended due to expired KYC. Update immediately at http://bit.ly/sbi-kyc-verify to prevent permanent block."),
-        ("Electricity Cutoff", "Dear consumer, your electricity connection will be disconnected tonight at 9:30 PM because previous bill was unpaid. Call power officer immediately at 9876543210."),
-        ("Legitimate Family", "Hi Grandma, reached home safely from college. Dad said we will go out for dinner together at 8 PM!"),
+        # (Button Label, Risk Category, Realistic Message Text)
+        ("Legitimate Family (LOW)", "LOW", "Hi Grandma, reached home safely from college. Dad said we will go out for dinner together at 8 PM!"),
+        ("Bank Balance Alert (LOW)", "LOW", "Your account XXXX1234 has been credited with INR 5,000 on 12-Nov. Available balance: INR 45,210."),
+        ("Suspicious Job Offer (MED)", "MEDIUM", "Part-time work from home! Earn 5000 to 10000 daily by liking YouTube videos. No investment needed. Contact telegram @easyearn"),
+        ("Unknown Lottery (MED)", "MEDIUM", "Congratulations! Your mobile number was selected in online lucky draw. Claim your 50000 cash voucher today."),
+        ("Bank KYC Threat (HIGH)", "HIGH", "URGENT: Your SBI netbanking account is suspended due to expired KYC. Update immediately at http://bit.ly/sbi-kyc-verify to prevent permanent block."),
+        ("Electricity Cutoff (HIGH)", "HIGH", "Dear consumer, your electricity connection will be disconnected tonight at 9:30 PM because previous bill was unpaid. Call power officer immediately at 9876543210."),
     ]
-    for i, (s_label, s_text) in enumerate(samples):
-        with sample_cols[i]:
+
+    r1_col1, r1_col2, r1_col3 = st.columns(3)
+    r2_col1, r2_col2, r2_col3 = st.columns(3)
+    cols = [r1_col1, r1_col2, r1_col3, r2_col1, r2_col2, r2_col3]
+
+    for i, (s_label, s_cat, s_text) in enumerate(samples):
+        with cols[i]:
             if st.button(s_label, key=f"smp_{i}", use_container_width=True):
+                st.session_state["main_msg_textarea"] = s_text
                 st.session_state.message_input = s_text
+                st.session_state.last_message_result = None
                 st.rerun()
+
+    if "main_msg_textarea" not in st.session_state:
+        st.session_state["main_msg_textarea"] = st.session_state.get("message_input", "")
 
     user_msg = st.text_area(
         t("msg_input_label", lang),
-        value=st.session_state.message_input,
+        value=st.session_state["main_msg_textarea"],
         placeholder=t("msg_placeholder", lang),
         key="main_msg_textarea",
-        height=95
+        height=100
     )
 
     btn_c1, btn_c2 = st.columns([4, 1])
@@ -482,22 +496,26 @@ elif st.session_state.active_nav == "nav_message_checker":
         clear_clicked = st.button(t("msg_btn_clear", lang), use_container_width=True)
 
     if clear_clicked:
+        st.session_state["main_msg_textarea"] = ""
         st.session_state.message_input = ""
         st.session_state.last_message_result = None
         st.rerun()
 
     if analyze_clicked:
-        if not user_msg.strip():
+        active_msg = user_msg.strip()
+        if not active_msg:
             st.warning(t("msg_input_required", lang))
         else:
             with st.spinner(t("msg_analyzing", lang)):
-                result = run_integrated_analysis(user_msg)
+                result = run_integrated_analysis(active_msg)
                 st.session_state.last_message_result = result
+                st.session_state.message_input = active_msg
                 
+                detected_risk = str(result.get("overall_risk") or result.get("overall_risk_level") or "LOW").upper()
                 log_analysis_history(
                     input_type="Message",
-                    content=user_msg.strip(),
-                    risk_level=result.get("overall_risk_level", "SAFE"),
+                    content=active_msg,
+                    risk_level=detected_risk,
                     score=result.get("risk_score", 0.0)
                 )
 
@@ -506,7 +524,7 @@ elif st.session_state.active_nav == "nav_message_checker":
         st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
         st.markdown(f"<h2 style='font-size:18px; color:#49316F;'>{t('msg_results_heading', lang)}</h2>", unsafe_allow_html=True)
 
-        overall_risk = res.get("overall_risk_level", "SAFE")
+        overall_risk = str(res.get("overall_risk") or res.get("overall_risk_level") or "LOW").upper()
         warning = res.get("warning", "")
         risk_score = res.get("risk_score", 0.0)
         prediction = res.get("message_prediction", "UNKNOWN")
@@ -653,26 +671,38 @@ elif st.session_state.active_nav == "nav_url_checker":
             url_level = "HIGH"
             level_banner_class = "alert-high"
             level_text = translate_url_risk("MALICIOUS", lang)
+            url_icon_svg = ICONS['shield_alert']
+            url_badge_style = "background:#DC2626; color:#FFFFFF; border: 1.5px solid #B91C1C;"
+            title_color = "#991B1B"
+            target_color = "#7F1D1D"
         elif is_suspicious or risk_score >= 1:
             url_level = "MEDIUM"
             level_banner_class = "alert-med"
             level_text = translate_url_risk("SUSPICIOUS", lang)
+            url_icon_svg = ICONS['alert_triangle']
+            url_badge_style = "background:#D97706; color:#FFFFFF; border: 1.5px solid #B45309;"
+            title_color = "#92400E"
+            target_color = "#78350F"
         else:
             url_level = "LOW"
             level_banner_class = "alert-low"
             level_text = translate_url_risk("SAFE", lang)
+            url_icon_svg = ICONS['shield_check']
+            url_badge_style = "background:#10B981; color:#FFFFFF; border: 1.5px solid #059669;"
+            title_color = "#065F46"
+            target_color = "#064E3B"
 
         st.markdown(f"""
         <div class="{level_banner_class}">
           <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
-            <div style="display:flex; align-items:center; gap:8px;">
-              {ICONS['globe']}
+            <div style="display:flex; align-items:center; gap:10px;">
+              {url_icon_svg}
               <div>
-                <h2 style="margin:0; font-size:17px;">{level_text}</h2>
-                <span style="font-size:13px; color:#49316F;">Target: {analyzed_url}</span>
+                <h2 style="margin:0; font-size:18px; color:{title_color}; font-weight:800;">{level_text}</h2>
+                <span style="font-size:13px; color:{target_color}; font-weight:500;">Target: {analyzed_url}</span>
               </div>
             </div>
-            <div style="padding:4px 10px; border-radius:14px; background:rgba(0,0,0,0.06); font-weight:700; font-size:12px;">
+            <div style="padding:5px 14px; border-radius:20px; {url_badge_style} font-weight:800; font-size:13px;">
               Risk Points: {risk_score}
             </div>
           </div>
@@ -950,10 +980,18 @@ elif st.session_state.active_nav == "nav_settings":
         hist = st.session_state.analysis_history
         if hist:
             for h_item in hist[:6]:
+                lvl = str(h_item.get('risk_level', 'LOW')).upper()
+                if lvl == "HIGH":
+                    badge_html = "<span style='background:#FEF2F2; color:#991B1B; border:1px solid #EF4444; border-radius:12px; padding:2px 8px; font-weight:700; font-size:11px;'>HIGH RISK</span>"
+                elif lvl == "MEDIUM":
+                    badge_html = "<span style='background:#FFFBEB; color:#92400E; border:1px solid #F59E0B; border-radius:12px; padding:2px 8px; font-weight:700; font-size:11px;'>MEDIUM RISK</span>"
+                else:
+                    badge_html = "<span style='background:#ECFDF5; color:#065F46; border:1px solid #10B981; border-radius:12px; padding:2px 8px; font-weight:700; font-size:11px;'>LOW RISK</span>"
+
                 st.markdown(f"""
-                <div style='font-size:12.5px; padding:6px 8px; border-bottom:1px solid #E6E0EF; display:flex; justify-content:space-between;'>
+                <div style='font-size:12.5px; padding:8px 10px; border-bottom:1px solid #E6E0EF; display:flex; justify-content:space-between; align-items:center;'>
                   <span><b>[{h_item['type']}]</b> {h_item['preview']}</span>
-                  <span style='color:#7653B5; font-weight:700;'>{h_item['risk_level']}</span>
+                  {badge_html}
                 </div>
                 """, unsafe_allow_html=True)
             if st.button(t("set_history_clear_btn", lang), key="btn_clear_hist_full"):

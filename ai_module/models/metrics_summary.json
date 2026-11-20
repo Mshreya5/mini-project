@@ -1,42 +1,48 @@
 {
   "Logistic Regression": {
-    "accuracy": 0.9806,
-    "precision_scam": 0.9091,
-    "recall_scam": 0.9375,
-    "f1_scam": 0.9231,
-    "macro_f1": 0.956,
-    "roc_auc": 0.9963,
+    "accuracy": 0.9843,
+    "precision_scam": 0.9389,
+    "recall_scam": 0.9602,
+    "f1_scam": 0.9494,
+    "precision_legitimate": 0.9927,
+    "recall_legitimate": 0.9886,
+    "f1_legitimate": 0.9907,
+    "macro_f1": 0.9701,
+    "roc_auc": 0.9939,
+    "cv_mean_accuracy": 0.981,
+    "cv_mean_macro_f1": 0.9636,
     "confusion_matrix": {
-      "true_negatives": 892,
-      "false_positives": 12,
-      "false_negatives": 8,
-      "true_positives": 120
+      "true_negatives": 957,
+      "false_positives": 11,
+      "false_negatives": 7,
+      "true_positives": 169
     },
     "rates": {
-      "false_negative_rate": 0.0625,
-      "false_positive_rate": 0.0133
-    },
-    "cv_mean_accuracy": 0.9833,
-    "cv_mean_macro_f1": 0.9614
+      "false_negative_rate": 0.0398,
+      "false_positive_rate": 0.0114
+    }
   },
   "Multinomial Naive Bayes": {
-    "accuracy": 0.9826,
-    "precision_scam": 0.9825,
-    "recall_scam": 0.875,
-    "f1_scam": 0.9256,
-    "macro_f1": 0.9579,
-    "roc_auc": 0.9892,
+    "accuracy": 0.9816,
+    "precision_scam": 0.9697,
+    "recall_scam": 0.9091,
+    "f1_scam": 0.9384,
+    "precision_legitimate": 0.9837,
+    "recall_legitimate": 0.9948,
+    "f1_legitimate": 0.9892,
+    "macro_f1": 0.9638,
+    "roc_auc": 0.9915,
+    "cv_mean_accuracy": 0.9827,
+    "cv_mean_macro_f1": 0.9661,
     "confusion_matrix": {
-      "true_negatives": 902,
-      "false_positives": 2,
+      "true_negatives": 963,
+      "false_positives": 5,
       "false_negatives": 16,
-      "true_positives": 112
+      "true_positives": 160
     },
     "rates": {
-      "false_negative_rate": 0.125,
-      "false_positive_rate": 0.0022
-    },
-    "cv_mean_accuracy": 0.9874,
-    "cv_mean_macro_f1": 0.9702
+      "false_negative_rate": 0.0909,
+      "false_positive_rate": 0.0052
+    }
   }
 }

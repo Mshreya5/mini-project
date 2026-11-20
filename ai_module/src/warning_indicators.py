@@ -22,32 +22,47 @@ class WarningIndicatorDetector:
         ]
 
         self.fake_prize_patterns = [
-            re.compile(r"\b(?:congratulations|congrats|selected|chosen|awarded)\b.*?\b(?:winner|won|cash|prize|reward|lottery|jackpot|gift\s*card)\b", re.IGNORECASE),
+            re.compile(r"\b(?:congratulations|congrats|selected|chosen|awarded)\b.*?\b(?:winner|won|cash|prize|reward|lottery|jackpot|gift\s*card|voucher)\b", re.IGNORECASE),
             re.compile(r"\b(?:claim|collect|redeem|receive)\s+(?:your\s+)?(?:free\s+)?(?:prize|reward|cash|bonus|gift|voucher|grant|jackpot)\b", re.IGNORECASE),
-            re.compile(r"\b(?:won|win)\s+(?:a\s+)?(?:cash|lottery|jackpot|fortune|\$|£|€|\d+[\d,]*\s*(?:pounds|dollars|rupees))\b", re.IGNORECASE),
-            re.compile(r"\b(?:lottery|sweepstake|lucky\s+draw)\s+(?:winner|award|ticket)\b", re.IGNORECASE),
+            re.compile(r"\b(?:won|win)\s+(?:a\s+)?(?:cash|lottery|jackpot|fortune|\$|£|€|\d+[\d,]*\s*(?:pounds|dollars|rupees|lakhs?))\b", re.IGNORECASE),
+            re.compile(r"\b(?:lottery|sweepstake|lucky\s+draw|kbc)\s+(?:winner|award|ticket|voucher)\b", re.IGNORECASE),
             re.compile(r"\bguaranteed\s+(?:winner|cash|payout)\b", re.IGNORECASE),
+            re.compile(r"\b(?:part[- ]time|work\s+from\s+home|wfh)\s+(?:job|work|opportunity)?\b.*?\b(?:earn|daily\s+income|salary)\b", re.IGNORECASE),
+            re.compile(r"\b(?:liking|watching)\s+(?:youtube|videos|posts)\b.*?\b(?:earn|paid|telegram)\b", re.IGNORECASE),
+            re.compile(r"\bcontact\s+(?:telegram|whatsapp)\s+@?[a-z0-9_]+\b", re.IGNORECASE),
+            re.compile(r"\bearn\s+\d+\s*(?:to|-)\s*\d+\s+daily\b", re.IGNORECASE),
+            re.compile(r"\b(?:pm[- ]?kisan|government\s+scheme|free\s+recharge|free\s+laptop|yojana|subsidy|pension\s+bonus)\b", re.IGNORECASE),
         ]
 
         self.bank_impersonation_patterns = [
-            re.compile(r"\b(?:bank|barclays|hsbc|lloyds|natwest|santander|chase|wells\s+fargo|citi|hdfc|sbi|icici|axis)\b.*?\b(?:account|security|fraud\s+team|alert|unauthorized|activity)\b", re.IGNORECASE),
+            re.compile(r"\b(?:bank|barclays|hsbc|lloyds|natwest|santander|chase|wells\s+fargo|citi|hdfc|sbi|icici|axis|pnb|kotak|canara|union\s+bank|bank\s+of\s+baroda)\b.*?\b(?:account|security|fraud\s+team|alert|unauthorized|activity|yono)\b", re.IGNORECASE),
             re.compile(r"\b(?:fraud\s+department|security\s+division|official\s+bank\s+notice)\b", re.IGNORECASE),
-            re.compile(r"\b(?:bank|credit|debit)\s+card\s+(?:details|number|blocked|cancelled)\b", re.IGNORECASE),
+            re.compile(r"\b(?:bank|credit|debit)\s+card\s+(?:details|number|blocked|cancelled|expired)\b", re.IGNORECASE),
+            re.compile(r"\b(?:customs|parcel|drugs|illegal\s+package|digital\s+arrest|cbi\s+officer)\b", re.IGNORECASE),
         ]
 
         self.account_verification_patterns = [
-            re.compile(r"\b(?:login|sign[- ]in|verify|validate|update|confirm)\s+(?:your\s+)?(?:account|identity|details|credentials|kyc|profile|records)\b", re.IGNORECASE),
+            re.compile(r"\b(?:login|sign[- ]in)\s+(?:to\s+)?(?:verify|validate|update|confirm)\s+(?:your\s+)?(?:account|credentials)\b", re.IGNORECASE),
             re.compile(r"\bclick\s+here\s+to\s+verify\s+your\s+account\b", re.IGNORECASE),
             re.compile(r"\bverify\s+your\s+(?:bank\s+)?information\s+to\s+avoid\b", re.IGNORECASE),
             re.compile(r"\bsecurity\s+update\s+required\b", re.IGNORECASE),
         ]
 
+        self.sensitive_info_patterns = [
+            re.compile(r"\b(?:bank\s+documents|kyc|pan\s+card|aadhaar|identity\s+proof)\s+(?:need|require|requires|pending)\s+(?:re[- ]?verification|update|validation)\b", re.IGNORECASE),
+            re.compile(r"\b(?:update|confirm)\s+(?:your\s+)?(?:personal\s+information|identity\s+documents|kyc\s+status|records)\b", re.IGNORECASE),
+        ]
+
         self.account_suspension_patterns = [
             re.compile(r"\b(?:account|card|service|access|profile)\s+(?:has\s+been|will\s+be|is\s+temporarily)\s+(?:suspended|blocked|locked|terminated|cancelled|frozen|restricted)\b", re.IGNORECASE),
             re.compile(r"\b(?:final|last)\s+(?:notice|warning|reminder|alert)\b", re.IGNORECASE),
-            re.compile(r"\b(?:threatened\s+with\s+legal|legal\s+action|warrant\s+issued|arrest)\b", re.IGNORECASE),
-            re.compile(r"\bto\s+avoid\s+(?:suspension|account\s+closure|penalty|deactivation)\b", re.IGNORECASE),
+            re.compile(r"\b(?:threatened\s+with\s+legal|legal\s+action|warrant\s+issued|arrest|digital\s+arrest)\b", re.IGNORECASE),
+            re.compile(r"\bto\s+avoid\s+(?:suspension|account\s+closure|penalty|deactivation|disconnection)\b", re.IGNORECASE),
             re.compile(r"\bimmediate\s+action\s+required\s+or\s+your\s+account\b", re.IGNORECASE),
+            re.compile(r"\b(?:electricity|power|bijli|water\s+supply|gas\s+supply)\s+(?:power\s+)?(?:bill|supply|connection|meter)?\s*(?:has\s+been|will\s+be|is\s+to\s+be)?\s*(?:disconnected|cutoff|cut\s*off|suspended|stopped)\b", re.IGNORECASE),
+            re.compile(r"\belectricity\s+connection\s+will\s+be\s+disconnected\b", re.IGNORECASE),
+            re.compile(r"\b(?:call|contact)\s+(?:electricity|power|power\s+supply)\s+(?:officer|helpline|executive|department)\b", re.IGNORECASE),
+            re.compile(r"\bprevious\s+(?:month\s+)?bill\s+(?:was\s+not|not)\s+updated\b", re.IGNORECASE),
         ]
 
         self.suspicious_link_patterns = [
@@ -87,6 +102,12 @@ class WarningIndicatorDetector:
                 "label": "Suspicious account verification",
                 "patterns": self.account_verification_patterns,
                 "description": "Requests verification of identity, credentials, or personal records.",
+            },
+            {
+                "id": "sensitive_info",
+                "label": "Requests sensitive information or KYC update",
+                "patterns": self.sensitive_info_patterns,
+                "description": "Requests verification of identity, PAN, or KYC documents.",
             },
             {
                 "id": "account_suspension",

@@ -276,28 +276,34 @@ def render_risk_card(risk_level: str, warning_text: str, risk_score: float, lang
     if norm_level == "HIGH":
         css_class = "alert-high"
         icon_svg = ICONS['shield_alert']
-        badge_style = "background:#DC2626; color:white;"
+        badge_style = "background:#DC2626; color:#FFFFFF; border: 1.5px solid #B91C1C;"
+        title_color = "#991B1B"
+        warn_color = "#7F1D1D"
     elif norm_level == "MEDIUM":
         css_class = "alert-med"
         icon_svg = ICONS['alert_triangle']
-        badge_style = "background:#D97706; color:white;"
+        badge_style = "background:#D97706; color:#FFFFFF; border: 1.5px solid #B45309;"
+        title_color = "#92400E"
+        warn_color = "#78350F"
     else:
         css_class = "alert-low"
         icon_svg = ICONS['shield_check']
-        badge_style = "background:#10B981; color:white;"
+        badge_style = "background:#10B981; color:#FFFFFF; border: 1.5px solid #059669;"
+        title_color = "#065F46"
+        warn_color = "#064E3B"
         
     html = f"""
     <div class="{css_class}">
       <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:8px;">
         <div style="display:flex; align-items:center; gap:10px;">
           {icon_svg}
-          <h2 style="margin:0; font-size:18px;">{loc_risk}</h2>
+          <h2 style="margin:0; font-size:18px; color:{title_color}; font-weight:800;">{loc_risk}</h2>
         </div>
-        <div style="padding:4px 12px; border-radius:20px; font-weight:800; font-size:13px; {badge_style}">
+        <div style="padding:5px 14px; border-radius:20px; font-weight:800; font-size:13px; {badge_style}">
           Score: {score_pct}/100
         </div>
       </div>
-      <p style="margin:0; font-weight:600; font-size:15px; line-height:1.5;">{loc_warn}</p>
+      <p style="margin:0; font-weight:600; font-size:15px; line-height:1.5; color:{warn_color};">{loc_warn}</p>
     </div>
     """
     st.markdown(html, unsafe_allow_html=True)
